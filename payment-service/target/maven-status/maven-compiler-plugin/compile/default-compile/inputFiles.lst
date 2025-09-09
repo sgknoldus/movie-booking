@@ -1,8 +1,0 @@
-/Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/payment-service/src/main/java/com/moviebooking/payment/application/service/PaymentService.java
-/Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/payment-service/src/main/java/com/moviebooking/payment/infrastructure/client/BookingServiceClient.java
-/Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/payment-service/src/main/java/com/moviebooking/payment/presentation/controller/PaymentController.java
-/Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/payment-service/src/main/java/com/moviebooking/payment/application/dto/PaymentResponse.java
-/Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/payment-service/src/main/java/com/moviebooking/payment/domain/Payment.java
-/Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/payment-service/src/main/java/com/moviebooking/payment/infrastructure/repository/PaymentRepository.java
-/Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/payment-service/src/main/java/com/moviebooking/payment/PaymentServiceApplication.java
-/Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/payment-service/src/main/java/com/moviebooking/payment/application/dto/PaymentRequest.java

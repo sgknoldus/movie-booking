@@ -1,14 +1,33 @@
-# Maven
+# Maven build directories
 target/
+*/target/
 **/target/
+
+# Specific large JAR files
+theatre-service/target/theatre-service-1.0.0.jar
+movie-service/target/movie-service-1.0.0.jar
+
+# Compiled class files
 *.class
+
+# Package files
 *.jar
 *.war
 *.ear
-*.logs
-.project
-.classpath
-.settings/
+*.zip
+*.tar.gz
+*.rar
+
+# Maven specific
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
 
 # IDE files
 .idea/
