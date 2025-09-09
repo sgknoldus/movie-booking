@@ -1,4 +1,4 @@
-# Movie Booking System - Microservices Architecture
+# Movie Booking System - and Microservices Architecture
 
 A robust, scalable movie ticket booking platform built using Spring Boot microservices architecture and Domain-Driven Design (DDD) principles.
 
