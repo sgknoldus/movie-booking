@@ -5,4 +5,5 @@
 /Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/notification-service/src/main/java/com/moviebooking/notification/controller/NotificationController.java
 /Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/notification-service/src/main/java/com/moviebooking/notification/service/NotificationService.java
 /Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/notification-service/src/main/java/com/moviebooking/notification/repository/NotificationRepository.java
+/Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/notification-service/src/main/java/com/moviebooking/notification/NotificationServiceApplication.java
 /Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/notification-service/src/main/java/com/moviebooking/notification/domain/Notification.java

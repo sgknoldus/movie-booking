@@ -11,6 +11,10 @@
 
     <artifactId>notification-service</artifactId>
 
+    <properties>
+        <start-class>com.moviebooking.notification.NotificationServiceApplication</start-class>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.moviebooking</groupId>

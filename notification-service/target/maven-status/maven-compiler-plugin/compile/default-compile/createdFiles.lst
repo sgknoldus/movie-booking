@@ -1,4 +1,5 @@
 com/moviebooking/notification/controller/NotificationController.class
+com/moviebooking/notification/NotificationServiceApplication.class
 com/moviebooking/notification/domain/Notification.class
 com/moviebooking/notification/scheduler/NotificationScheduler.class
 com/moviebooking/notification/domain/Notification$NotificationStatus.class
