@@ -1,0 +1,33 @@
+# Maven
+target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.logs
+.project
+.classpath
+.settings/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.metadata/
+
+# Logs
+logs/
+*.log
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# virtual machine crash logs
+hs_err_pid*
