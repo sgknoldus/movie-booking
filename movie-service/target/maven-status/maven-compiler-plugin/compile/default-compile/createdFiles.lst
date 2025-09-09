@@ -1,0 +1,9 @@
+com/moviebooking/movie/application/dto/MovieResponse.class
+com/moviebooking/movie/domain/search/MovieDocument$MovieDocumentBuilder.class
+com/moviebooking/movie/infrastructure/repository/MovieSearchRepository.class
+com/moviebooking/movie/domain/Movie$MovieBuilder.class
+com/moviebooking/movie/application/dto/MovieResponse$MovieResponseBuilder.class
+com/moviebooking/movie/domain/search/MovieDocument.class
+com/moviebooking/movie/application/dto/MovieRequest.class
+com/moviebooking/movie/infrastructure/repository/MovieRepository.class
+com/moviebooking/movie/domain/Movie.class
