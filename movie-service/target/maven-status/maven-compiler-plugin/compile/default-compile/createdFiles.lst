@@ -1,5 +1,6 @@
 com/moviebooking/movie/application/dto/MovieResponse.class
 com/moviebooking/movie/domain/search/MovieDocument$MovieDocumentBuilder.class
+com/moviebooking/movie/MovieServiceApplication.class
 com/moviebooking/movie/infrastructure/repository/MovieSearchRepository.class
 com/moviebooking/movie/domain/Movie$MovieBuilder.class
 com/moviebooking/movie/application/dto/MovieResponse$MovieResponseBuilder.class

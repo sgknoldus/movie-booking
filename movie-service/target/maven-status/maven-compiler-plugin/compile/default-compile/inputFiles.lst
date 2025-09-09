@@ -1,6 +1,7 @@
 /Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/movie-service/src/main/java/com/moviebooking/movie/infrastructure/repository/MovieSearchRepository.java
 /Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/movie-service/src/main/java/com/moviebooking/movie/application/dto/MovieResponse.java
 /Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/movie-service/src/main/java/com/moviebooking/movie/domain/Movie.java
+/Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/movie-service/src/main/java/com/moviebooking/movie/MovieServiceApplication.java
 /Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/movie-service/src/main/java/com/moviebooking/movie/infrastructure/repository/MovieRepository.java
 /Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/movie-service/src/main/java/com/moviebooking/movie/domain/search/MovieDocument.java
 /Users/sushantgupta/Vscode-workspace/movieBookingDesign/movie-booking-system/movie-service/src/main/java/com/moviebooking/movie/application/dto/MovieRequest.java
