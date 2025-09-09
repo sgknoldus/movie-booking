@@ -5,10 +5,10 @@ services:
     image: postgres:14-alpine
     container_name: movie-booking-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_MULTIPLE_DATABASES: user_service,movie_service,theatre_service,booking_service,payment_service,notification_service
-      POSTGRES_DB: moviebooking
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_MULTIPLE_DATABASES=user_service,movie_service,theatre_service,booking_service,payment_service,notification_service
+      - POSTGRES_DB=moviebooking
     volumes:
       - ./scripts/create-multiple-postgresql-databases.sh:/docker-entrypoint-initdb.d/create-multiple-postgresql-databases.sh
       - postgres_data:/var/lib/postgresql/data

@@ -33,6 +33,7 @@ check_service() {
 echo "Stopping all existing containers..."
 docker-compose down -v
 
+
 # Start all services
 echo -e "\nStarting all services..."
 docker-compose up -d postgres redis elasticsearch zookeeper kafka

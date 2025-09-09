@@ -1,13 +1,16 @@
 package com.moviebooking.theatre.application.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moviebooking.theatre.application.dto.TheatreSearchResponse;
 import com.moviebooking.theatre.domain.Show;
 import com.moviebooking.theatre.domain.Theatre;
 import com.moviebooking.theatre.domain.search.TheatreDocument;
 import com.moviebooking.theatre.infrastructure.repository.ShowRepository;
 import com.moviebooking.theatre.infrastructure.repository.TheatreElasticsearchRepository;
-import com.moviebooking.theatre.infrastructure.repository.TheatreRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.elasticsearch.core.geo.GeoPoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +24,9 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TheatreService {
 
-    private final TheatreRepository theatreRepository;
     private final TheatreElasticsearchRepository theatreElasticsearchRepository;
     private final ShowRepository showRepository;
 
@@ -68,7 +71,15 @@ public class TheatreService {
     }
 
     private List<String> parseAvailableSeats(String availableSeatsJson) {
-        // TODO: Implement JSON parsing of available seats
-        return List.of();
+        if (availableSeatsJson == null || availableSeatsJson.isBlank()) {
+            return List.of();
+        }
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(availableSeatsJson, new TypeReference<List<String>>() {});
+        } catch (JsonProcessingException e) {
+            log.error("Error parsing available seats JSON: {}", e.getMessage());
+            return List.of();
+        }
     }
 }

@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -70,8 +71,8 @@ class TheatreServiceTest {
                 .availableSeats("[]")
                 .build();
 
-        theatre.setScreens(List.of(screen));
-        screen.setShows(List.of(show));
+        theatre.setScreens(Set.of(screen));
+        screen.setShows(Set.of(show));
     }
 
     @Test

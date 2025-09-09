@@ -13,8 +13,13 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -80,8 +85,26 @@ public class BookingService {
     }
 
     private void validateSeatsAvailability(TheatreServiceClient.ShowResponse show, List<String> requestedSeats) {
-        // TODO: Implement seat validation logic
-        // This should check if the requested seats are available in the show's available seats
+        if (show == null || show.availableSeats() == null || requestedSeats == null) {
+            throw new IllegalArgumentException("Show, available seats, or requested seats cannot be null");
+        }
+
+        List<String> availableSeats;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            availableSeats = objectMapper.readValue(show.availableSeats(), new TypeReference<List<String>>() {});
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Error parsing available seats: " + e.getMessage());
+        }
+        
+        // Check if all requested seats are available
+        if (!availableSeats.containsAll(requestedSeats)) {
+            List<String> unavailableSeats = requestedSeats.stream()
+                    .filter(seat -> !availableSeats.contains(seat))
+                    .collect(Collectors.toList());
+                    
+            throw new IllegalArgumentException("Following seats are not available: " + String.join(", ", unavailableSeats));
+        }
     }
 
     private BigDecimal calculateTotalAmount(Double price, int seatCount) {

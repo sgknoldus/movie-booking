@@ -32,6 +32,7 @@ public class Screen {
     private String seatLayout;
 
     @OneToMany(mappedBy = "screen", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<Show> shows = new HashSet<>();
 
     @Version
@@ -39,11 +40,15 @@ public class Screen {
 
     public void addShow(Show show) {
         shows.add(show);
-        show.setScreen(this);
+        if (show.getScreen() != this) {
+            show.setScreen(this);
+        }
     }
 
     public void removeShow(Show show) {
         shows.remove(show);
-        show.setScreen(null);
+        if (show.getScreen() == this) {
+            show.setScreen(null);
+        }
     }
 }

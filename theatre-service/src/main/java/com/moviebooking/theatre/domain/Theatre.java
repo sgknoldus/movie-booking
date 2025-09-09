@@ -28,6 +28,7 @@ public class Theatre {
     private String address;
 
     @OneToMany(mappedBy = "theatre", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<Screen> screens = new HashSet<>();
 
     @Version
@@ -35,11 +36,15 @@ public class Theatre {
 
     public void addScreen(Screen screen) {
         screens.add(screen);
-        screen.setTheatre(this);
+        if (screen.getTheatre() != this) {
+            screen.setTheatre(this);
+        }
     }
 
     public void removeScreen(Screen screen) {
         screens.remove(screen);
-        screen.setTheatre(null);
+        if (screen.getTheatre() == this) {
+            screen.setTheatre(null);
+        }
     }
 }

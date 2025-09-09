@@ -1,0 +1,5 @@
+com/moviebooking/gateway/ApiGatewayApplication.class
+com/moviebooking/gateway/config/GatewayConfig.class
+com/moviebooking/gateway/filter/JwtAuthenticationFilter.class
+com/moviebooking/gateway/filter/JwtAuthenticationFilter$Config.class
+com/moviebooking/gateway/security/JwtTokenValidator.class
