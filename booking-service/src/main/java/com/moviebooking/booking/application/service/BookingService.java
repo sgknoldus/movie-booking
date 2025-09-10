@@ -124,4 +124,58 @@ public class BookingService {
                 .paymentUrl("/api/payments/" + booking.getId()) // Mock payment URL
                 .build();
     }
+
+    @Transactional
+    public void updatePaymentStatus(UUID bookingId, String status) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+
+        // Update booking status based on payment status
+        switch (status) {
+            case "CONFIRMED" -> {
+                booking.setStatus(Booking.BookingStatus.CONFIRMED);
+                // Publish booking confirmed event
+                // Can add Kafka event publishing here if needed
+            }
+            case "PAYMENT_FAILED" -> {
+                booking.setStatus(Booking.BookingStatus.CANCELLED);
+                // Publish booking cancelled event
+                // Can add Kafka event publishing here if needed
+            }
+            default -> throw new IllegalArgumentException("Invalid payment status: " + status);
+        }
+
+        bookingRepository.save(booking);
+    }
+
+    @Transactional(readOnly = true)
+    public BookingResponse getBooking(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+        return createBookingResponse(booking);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getUserBookings(UUID userId) {
+        List<Booking> bookings = bookingRepository.findByUserIdOrderByBookedAtDesc(userId);
+        return bookings.stream()
+                .map(this::createBookingResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void cancelBooking(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+        
+        if (booking.getStatus() == Booking.BookingStatus.CONFIRMED) {
+            throw new RuntimeException("Cannot cancel a confirmed booking");
+        }
+        
+        booking.setStatus(Booking.BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+        
+        // Publish booking cancelled event
+        // Can add Kafka event publishing here if needed
+    }
 }
