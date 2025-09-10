@@ -29,7 +29,15 @@ public class SecurityConfig {
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api-docs/**", "/swagger-ui/**").permitAll()
+                .requestMatchers(
+                    "/api/auth/**", 
+                    "/api-docs/**", 
+                    "/swagger-ui/**", 
+                    "/swagger-ui.html",
+                    "/webjars/**",
+                    "/v3/api-docs/**",
+                    "/actuator/health"
+                ).permitAll()
                 .anyRequest().authenticated());
         
         return http.build();

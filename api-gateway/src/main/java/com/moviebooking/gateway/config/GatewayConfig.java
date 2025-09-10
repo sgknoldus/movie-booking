@@ -40,6 +40,36 @@ public class GatewayConfig {
                 .route("payment-service", r -> r
                         .path("/api/payments/**")
                         .uri("lb://payment-service"))
+                
+                // Show Service Routes (Theatre Service)
+                .route("show-service", r -> r
+                        .path("/api/shows/**")
+                        .uri("lb://theatre-service"))
+                
+                // Notification Service Routes
+                .route("notification-service", r -> r
+                        .path("/api/v1/notifications/**")
+                        .uri("lb://notification-service"))
+                
+                // Swagger UI Routes for all services
+                .route("swagger-movie-service", r -> r
+                        .path("/movie-service/swagger-ui.html")
+                        .uri("lb://movie-service"))
+                .route("swagger-user-service", r -> r
+                        .path("/user-service/swagger-ui.html")
+                        .uri("lb://user-service"))
+                .route("swagger-theatre-service", r -> r
+                        .path("/theatre-service/swagger-ui.html")
+                        .uri("lb://theatre-service"))
+                .route("swagger-booking-service", r -> r
+                        .path("/booking-service/swagger-ui.html")
+                        .uri("lb://booking-service"))
+                .route("swagger-payment-service", r -> r
+                        .path("/payment-service/swagger-ui.html")
+                        .uri("lb://payment-service"))
+                .route("swagger-notification-service", r -> r
+                        .path("/notification-service/swagger-ui.html")
+                        .uri("lb://notification-service"))
                 .build();
     }
 }
