@@ -82,9 +82,19 @@ public class OutboxEventService {
     public void markEventAsFailed(Long eventId) {
         OutboxEvent event = outboxEventRepository.findById(eventId).orElse(null);
         if (event != null) {
+            int newRetryCount = event.getRetryCount() + 1;
             event.setStatus(OutboxEvent.EventStatus.FAILED);
-            event.setRetryCount(event.getRetryCount() + 1);
+            event.setRetryCount(newRetryCount);
             outboxEventRepository.save(event);
+            
+            log.warn("Marked outbox event as FAILED: id={}, aggregateType={}, aggregateId={}, eventType={}, retryCount={}", 
+                eventId, event.getAggregateType(), event.getAggregateId(), event.getEventType(), newRetryCount);
+            
+            if (newRetryCount >= 3) {
+                log.error("Outbox event {} has reached maximum retry count (3), will not be retried automatically. Manual intervention required.", eventId);
+            }
+        } else {
+            log.error("Failed to mark outbox event as failed - event not found: id={}", eventId);
         }
     }
     

@@ -19,9 +19,11 @@ import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -87,7 +89,8 @@ public class SearchService {
     // Show Search Methods
     public List<ShowDocument> searchShows(String query) {
         if (query == null || query.trim().isEmpty()) {
-            return (List<ShowDocument>) showSearchRepository.findAll();
+            return StreamSupport.stream(showSearchRepository.findAll().spliterator(), false)
+                    .collect(Collectors.toList());
         }
         return showSearchRepository.findByMovieTitleContainingIgnoreCase(query);
     }

@@ -31,11 +31,19 @@ public class OutboxEventPublisher {
     public void publishPendingEvents() {
         List<OutboxEvent> pendingEvents = outboxEventService.getPendingEvents();
         
+        if (!pendingEvents.isEmpty()) {
+            log.debug("Found {} pending outbox events to publish", pendingEvents.size());
+        }
+        
         for (OutboxEvent event : pendingEvents) {
             try {
+                log.debug("Publishing outbox event: id={}, aggregateType={}, aggregateId={}, eventType={}", 
+                    event.getId(), event.getAggregateType(), event.getAggregateId(), event.getEventType());
                 publishEventToKafka(event);
             } catch (Exception e) {
-                log.error("Failed to publish event {}: {}", event.getId(), e.getMessage());
+                log.error("Failed to publish outbox event: id={}, aggregateType={}, aggregateId={}, eventType={}, error={}, stackTrace={}", 
+                    event.getId(), event.getAggregateType(), event.getAggregateId(), event.getEventType(), 
+                    e.getMessage(), e.getClass().getSimpleName(), e);
                 outboxEventService.markEventAsFailed(event.getId());
             }
         }
@@ -44,19 +52,31 @@ public class OutboxEventPublisher {
     private void publishEventToKafka(OutboxEvent event) {
         String key = event.getAggregateType() + "-" + event.getAggregateId();
         
-        CompletableFuture<SendResult<String, String>> future = 
-            kafkaTemplate.send(theatreEventsTopic, key, event.getEventData());
+        log.debug("Sending Kafka message: topic={}, key={}, eventId={}", theatreEventsTopic, key, event.getId());
         
-        future.whenComplete((result, ex) -> {
-            if (ex == null) {
-                log.info("Published event {} to Kafka: offset={}", 
-                    event.getId(), result.getRecordMetadata().offset());
-                outboxEventService.markEventAsProcessed(event.getId());
-            } else {
-                log.error("Failed to publish event {} to Kafka: {}", event.getId(), ex.getMessage());
-                outboxEventService.markEventAsFailed(event.getId());
-            }
-        });
+        try {
+            CompletableFuture<SendResult<String, String>> future = 
+                kafkaTemplate.send(theatreEventsTopic, key, event.getEventData());
+            
+            future.whenComplete((result, ex) -> {
+                if (ex == null) {
+                    log.info("Successfully published outbox event {} to Kafka: topic={}, partition={}, offset={}, key={}", 
+                        event.getId(), theatreEventsTopic, result.getRecordMetadata().partition(), 
+                        result.getRecordMetadata().offset(), key);
+                    outboxEventService.markEventAsProcessed(event.getId());
+                } else {
+                    log.error("Failed to publish outbox event {} to Kafka: topic={}, key={}, error={}, errorType={}, retryCount={}", 
+                        event.getId(), theatreEventsTopic, key, ex.getMessage(), 
+                        ex.getClass().getSimpleName(), event.getRetryCount(), ex);
+                    outboxEventService.markEventAsFailed(event.getId());
+                }
+            });
+        } catch (Exception e) {
+            log.error("Exception while sending Kafka message for outbox event {}: topic={}, key={}, error={}, errorType={}", 
+                event.getId(), theatreEventsTopic, key, e.getMessage(), e.getClass().getSimpleName(), e);
+            outboxEventService.markEventAsFailed(event.getId());
+            throw e;
+        }
     }
     
     @Scheduled(fixedDelay = 300000) // Run every 5 minutes
@@ -65,12 +85,19 @@ public class OutboxEventPublisher {
         LocalDateTime cutoffTime = LocalDateTime.now().minusHours(1);
         List<OutboxEvent> failedEvents = outboxEventRepository.findFailedEventsForRetry(3, cutoffTime);
         
+        if (!failedEvents.isEmpty()) {
+            log.info("Found {} failed outbox events to retry (retry count < 3, older than 1 hour)", failedEvents.size());
+        }
+        
         for (OutboxEvent event : failedEvents) {
             try {
+                log.info("Retrying failed outbox event: id={}, aggregateType={}, aggregateId={}, eventType={}, retryCount={}", 
+                    event.getId(), event.getAggregateType(), event.getAggregateId(), event.getEventType(), event.getRetryCount());
                 publishEventToKafka(event);
-                log.info("Retrying failed event {}", event.getId());
             } catch (Exception e) {
-                log.error("Failed to retry event {}: {}", event.getId(), e.getMessage());
+                log.error("Failed to retry outbox event: id={}, aggregateType={}, aggregateId={}, eventType={}, retryCount={}, error={}, errorType={}", 
+                    event.getId(), event.getAggregateType(), event.getAggregateId(), event.getEventType(), 
+                    event.getRetryCount(), e.getMessage(), e.getClass().getSimpleName(), e);
                 outboxEventService.markEventAsFailed(event.getId());
             }
         }

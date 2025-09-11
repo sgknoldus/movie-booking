@@ -28,26 +28,45 @@ public class TheatreEventListener {
                                   @Header(KafkaHeaders.OFFSET) long offset,
                                   @Header(KafkaHeaders.RECEIVED_KEY) String key) {
         
-        log.info("Received event from topic: {}, partition: {}, offset: {}, key: {}", 
-                topic, partition, offset, key);
+        log.info("Received Kafka event: topic={}, partition={}, offset={}, key={}, dataLength={}", 
+                topic, partition, offset, key, eventData != null ? eventData.length() : 0);
         
         try {
+            if (eventData == null || eventData.trim().isEmpty()) {
+                log.error("Received empty or null event data: topic={}, partition={}, offset={}, key={}", 
+                    topic, partition, offset, key);
+                return;
+            }
+            
             JsonNode eventJson = objectMapper.readTree(eventData);
             String aggregateType = extractAggregateType(key);
             String eventType = determineEventType(eventJson);
             
+            log.debug("Processing event: aggregateType={}, eventType={}, topic={}, key={}", 
+                aggregateType, eventType, topic, key);
+            
             switch (aggregateType) {
-                case "City" -> handleCityEvent(eventType, eventJson);
-                case "Theatre" -> handleTheatreEvent(eventType, eventJson);
-                case "Screen" -> handleScreenEvent(eventType, eventJson);
-                case "Show" -> handleShowEvent(eventType, eventJson);
-                case "SeatAvailability" -> handleSeatEvent(eventType, eventJson);
-                default -> log.warn("Unknown aggregate type: {}", aggregateType);
+                case "City" -> handleCityEvent(eventType, eventJson, topic, partition, offset, key);
+                case "Theatre" -> handleTheatreEvent(eventType, eventJson, topic, partition, offset, key);
+                case "Screen" -> handleScreenEvent(eventType, eventJson, topic, partition, offset, key);
+                case "Show" -> handleShowEvent(eventType, eventJson, topic, partition, offset, key);
+                case "SeatAvailability" -> handleSeatEvent(eventType, eventJson, topic, partition, offset, key);
+                default -> {
+                    log.warn("Unknown aggregate type: {} for event: topic={}, partition={}, offset={}, key={}", 
+                        aggregateType, topic, partition, offset, key);
+                }
             }
             
+            log.debug("Successfully processed event: aggregateType={}, eventType={}, topic={}, key={}", 
+                aggregateType, eventType, topic, key);
+            
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            log.error("Failed to parse JSON event data: topic={}, partition={}, offset={}, key={}, error={}, eventData={}", 
+                topic, partition, offset, key, e.getMessage(), eventData, e);
         } catch (Exception e) {
-            log.error("Failed to process event: {}", e.getMessage(), e);
-            // In a production system, you might want to send this to a dead letter queue
+            log.error("Failed to process Kafka event: topic={}, partition={}, offset={}, key={}, error={}, errorType={}, eventData={}", 
+                topic, partition, offset, key, e.getMessage(), e.getClass().getSimpleName(), eventData, e);
+            // TODO: In a production system, consider sending this to a dead letter queue
         }
     }
     
@@ -67,75 +86,129 @@ public class TheatreEventListener {
         return "UNKNOWN";
     }
     
-    private void handleCityEvent(String eventType, JsonNode eventData) {
+    private void handleCityEvent(String eventType, JsonNode eventData, String topic, int partition, long offset, String key) {
         try {
+            log.debug("Handling city event: eventType={}, cityId={}, topic={}, key={}", 
+                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
+                
             switch (eventType) {
                 case "UPSERT":
                 case "CREATED":
                 case "UPDATED":
                     searchIndexService.indexCity(eventData);
+                    log.info("Successfully indexed city: id={}, eventType={}, topic={}, key={}", 
+                        eventData.has("id") ? eventData.get("id").asText() : "unknown", eventType, topic, key);
                     break;
                 case "DELETED":
-                    searchIndexService.deleteCity(eventData.get("id").asText());
+                    String cityId = eventData.get("id").asText();
+                    searchIndexService.deleteCity(cityId);
+                    log.info("Successfully deleted city from index: id={}, topic={}, key={}", cityId, topic, key);
                     break;
                 default:
-                    log.warn("Unknown city event type: {}", eventType);
+                    log.warn("Unknown city event type: {} for city: id={}, topic={}, key={}", 
+                        eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
             }
         } catch (Exception e) {
-            log.error("Failed to handle city event: {}", e.getMessage(), e);
+            log.error("Failed to handle city event: eventType={}, cityId={}, topic={}, partition={}, offset={}, key={}, error={}, errorType={}", 
+                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", 
+                topic, partition, offset, key, e.getMessage(), e.getClass().getSimpleName(), e);
         }
     }
     
-    private void handleTheatreEvent(String eventType, JsonNode eventData) {
+    private void handleTheatreEvent(String eventType, JsonNode eventData, String topic, int partition, long offset, String key) {
         try {
+            log.debug("Handling theatre event: eventType={}, theatreId={}, topic={}, key={}", 
+                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
+                
             switch (eventType) {
                 case "UPSERT":
                 case "CREATED":
                 case "UPDATED":
                     searchIndexService.indexTheatre(eventData);
+                    log.info("Successfully indexed theatre: id={}, eventType={}, topic={}, key={}", 
+                        eventData.has("id") ? eventData.get("id").asText() : "unknown", eventType, topic, key);
                     break;
                 case "DELETED":
-                    searchIndexService.deleteTheatre(eventData.get("id").asText());
+                    String theatreId = eventData.get("id").asText();
+                    searchIndexService.deleteTheatre(theatreId);
+                    log.info("Successfully deleted theatre from index: id={}, topic={}, key={}", theatreId, topic, key);
                     break;
                 default:
-                    log.warn("Unknown theatre event type: {}", eventType);
+                    log.warn("Unknown theatre event type: {} for theatre: id={}, topic={}, key={}", 
+                        eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
             }
         } catch (Exception e) {
-            log.error("Failed to handle theatre event: {}", e.getMessage(), e);
+            log.error("Failed to handle theatre event: eventType={}, theatreId={}, topic={}, partition={}, offset={}, key={}, error={}, errorType={}", 
+                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", 
+                topic, partition, offset, key, e.getMessage(), e.getClass().getSimpleName(), e);
         }
     }
     
-    private void handleScreenEvent(String eventType, JsonNode eventData) {
+    private void handleScreenEvent(String eventType, JsonNode eventData, String topic, int partition, long offset, String key) {
         // Screen events might affect theatre documents if we store screen count
-        log.info("Received screen event: {} for screen ID: {}", eventType, eventData.get("id").asText());
+        try {
+            String screenId = eventData.has("id") ? eventData.get("id").asText() : "unknown";
+            log.info("Received screen event: eventType={}, screenId={}, topic={}, key={}", eventType, screenId, topic, key);
+            
+            // TODO: Implement screen event handling if needed for search indexing
+            log.debug("Screen event processed (no action taken): eventType={}, screenId={}, topic={}, key={}", 
+                eventType, screenId, topic, key);
+        } catch (Exception e) {
+            log.error("Failed to handle screen event: eventType={}, topic={}, partition={}, offset={}, key={}, error={}, errorType={}", 
+                eventType, topic, partition, offset, key, e.getMessage(), e.getClass().getSimpleName(), e);
+        }
     }
     
-    private void handleShowEvent(String eventType, JsonNode eventData) {
+    private void handleShowEvent(String eventType, JsonNode eventData, String topic, int partition, long offset, String key) {
         try {
+            log.debug("Handling show event: eventType={}, showId={}, topic={}, key={}", 
+                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
+                
             switch (eventType) {
                 case "UPSERT":
                 case "CREATED":
                 case "UPDATED":
                     searchIndexService.indexShow(eventData);
+                    log.info("Successfully indexed show: id={}, eventType={}, topic={}, key={}", 
+                        eventData.has("id") ? eventData.get("id").asText() : "unknown", eventType, topic, key);
                     break;
                 case "DELETED":
-                    searchIndexService.deleteShow(eventData.get("id").asText());
+                    String showId = eventData.get("id").asText();
+                    searchIndexService.deleteShow(showId);
+                    log.info("Successfully deleted show from index: id={}, topic={}, key={}", showId, topic, key);
                     break;
                 default:
-                    log.warn("Unknown show event type: {}", eventType);
+                    log.warn("Unknown show event type: {} for show: id={}, topic={}, key={}", 
+                        eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
             }
         } catch (Exception e) {
-            log.error("Failed to handle show event: {}", e.getMessage(), e);
+            log.error("Failed to handle show event: eventType={}, showId={}, topic={}, partition={}, offset={}, key={}, error={}, errorType={}", 
+                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", 
+                topic, partition, offset, key, e.getMessage(), e.getClass().getSimpleName(), e);
         }
     }
     
-    private void handleSeatEvent(String eventType, JsonNode eventData) {
+    private void handleSeatEvent(String eventType, JsonNode eventData, String topic, int partition, long offset, String key) {
         // Seat availability changes might affect show documents (available seats count)
         try {
-            Long showId = eventData.get("showId").asLong();
-            searchIndexService.updateShowAvailableSeats(showId);
+            String seatId = eventData.has("id") ? eventData.get("id").asText() : "unknown";
+            Long showId = eventData.has("showId") ? eventData.get("showId").asLong() : null;
+            
+            log.debug("Handling seat event: eventType={}, seatId={}, showId={}, topic={}, key={}", 
+                eventType, seatId, showId, topic, key);
+            
+            if (showId != null) {
+                searchIndexService.updateShowAvailableSeats(showId);
+                log.info("Successfully updated show available seats: seatId={}, showId={}, eventType={}, topic={}, key={}", 
+                    seatId, showId, eventType, topic, key);
+            } else {
+                log.warn("Seat event missing showId: seatId={}, eventType={}, topic={}, key={}", 
+                    seatId, eventType, topic, key);
+            }
         } catch (Exception e) {
-            log.error("Failed to handle seat event: {}", e.getMessage(), e);
+            log.error("Failed to handle seat event: eventType={}, seatId={}, topic={}, partition={}, offset={}, key={}, error={}, errorType={}", 
+                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", 
+                topic, partition, offset, key, e.getMessage(), e.getClass().getSimpleName(), e);
         }
     }
 }
