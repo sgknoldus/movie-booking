@@ -94,41 +94,53 @@ public class GatewayConfig {
                 // API Documentation endpoints - exact paths
                 .route("api-docs-movie-exact", r -> r
                         .path("/movie-service/api-docs")
+                        .filters(f -> f.rewritePath("/movie-service/api-docs", "/api-docs"))
                         .uri("lb://movie-service"))
                 .route("api-docs-user-exact", r -> r
                         .path("/user-service/api-docs")
+                        .filters(f -> f.rewritePath("/user-service/api-docs", "/api-docs"))
                         .uri("lb://user-service"))
                 .route("api-docs-theatre-exact", r -> r
                         .path("/theatre-service/api-docs")
+                        .filters(f -> f.rewritePath("/theatre-service/api-docs", "/api-docs"))
                         .uri("lb://theatre-service"))
                 .route("api-docs-booking-exact", r -> r
                         .path("/booking-service/api-docs")
+                        .filters(f -> f.rewritePath("/booking-service/api-docs", "/api-docs"))
                         .uri("lb://booking-service"))
                 .route("api-docs-payment-exact", r -> r
                         .path("/payment-service/api-docs")
+                        .filters(f -> f.rewritePath("/payment-service/api-docs", "/api-docs"))
                         .uri("lb://payment-service"))
                 .route("api-docs-notification-exact", r -> r
                         .path("/notification-service/api-docs")
+                        .filters(f -> f.rewritePath("/notification-service/api-docs", "/api-docs"))
                         .uri("lb://notification-service"))
                         
                 // API Documentation endpoints - with sub-paths
                 .route("api-docs-movie", r -> r
                         .path("/movie-service/api-docs/**")
+                        .filters(f -> f.rewritePath("/movie-service/(?<segment>.*)", "/${segment}"))
                         .uri("lb://movie-service"))
                 .route("api-docs-user", r -> r
                         .path("/user-service/api-docs/**")
+                        .filters(f -> f.rewritePath("/user-service/(?<segment>.*)", "/${segment}"))
                         .uri("lb://user-service"))
                 .route("api-docs-theatre", r -> r
                         .path("/theatre-service/api-docs/**")
+                        .filters(f -> f.rewritePath("/theatre-service/(?<segment>.*)", "/${segment}"))
                         .uri("lb://theatre-service"))
                 .route("api-docs-booking", r -> r
                         .path("/booking-service/api-docs/**")
+                        .filters(f -> f.rewritePath("/booking-service/(?<segment>.*)", "/${segment}"))
                         .uri("lb://booking-service"))
                 .route("api-docs-payment", r -> r
                         .path("/payment-service/api-docs/**")
+                        .filters(f -> f.rewritePath("/payment-service/(?<segment>.*)", "/${segment}"))
                         .uri("lb://payment-service"))
                 .route("api-docs-notification", r -> r
                         .path("/notification-service/api-docs/**")
+                        .filters(f -> f.rewritePath("/notification-service/(?<segment>.*)", "/${segment}"))
                         .uri("lb://notification-service"))
                 
                 // Webjars for Swagger dependencies

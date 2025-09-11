@@ -11,50 +11,53 @@ import org.springframework.context.annotation.Lazy;
 import java.util.ArrayList;
 import java.util.List;
 
-@Configuration
+//@Configuration
 public class SwaggerConfig {
 
-    @Bean
-    @Lazy(false)
-    public List<AbstractSwaggerUiConfigProperties.SwaggerUrl> swaggerUrls() {
-        List<AbstractSwaggerUiConfigProperties.SwaggerUrl> urls = new ArrayList<>();
-        
-        // User Service
-        urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-                "User Service", 
-                "/user-service/api-docs", 
-                "user-service"));
-        
-        // Movie Service
-        urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-                "Movie Service", 
-                "/movie-service/api-docs", 
-                "movie-service"));
-        
-        // Theatre Service
-        urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-                "Theatre Service", 
-                "/theatre-service/api-docs", 
-                "theatre-service"));
-        
-        // Booking Service
-        urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-                "Booking Service", 
-                "/booking-service/api-docs", 
-                "booking-service"));
-        
-        // Payment Service
-        urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-                "Payment Service", 
-                "/payment-service/api-docs", 
-                "payment-service"));
-        
-        // Notification Service
-        urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-                "Notification Service", 
-                "/notification-service/api-docs", 
-                "notification-service"));
-        
-        return urls;
-    }
+    // Commented out to avoid conflicts with application.yml configuration
+    // The service URLs are now configured in application.yml under springdoc.swagger-ui.urls
+    
+    //@Bean
+    //@Lazy(false)
+    //public List<AbstractSwaggerUiConfigProperties.SwaggerUrl> swaggerUrls() {
+    //    List<AbstractSwaggerUiConfigProperties.SwaggerUrl> urls = new ArrayList<>();
+    //    
+    //    // User Service
+    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
+    //            "User Service", 
+    //            "/user-service/api-docs", 
+    //            "user-service"));
+    //    
+    //    // Movie Service
+    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
+    //            "Movie Service", 
+    //            "/movie-service/api-docs", 
+    //            "movie-service"));
+    //    
+    //    // Theatre Service
+    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
+    //            "Theatre Service", 
+    //            "/theatre-service/api-docs", 
+    //            "theatre-service"));
+    //    
+    //    // Booking Service
+    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
+    //            "Booking Service", 
+    //            "/booking-service/api-docs", 
+    //            "booking-service"));
+    //    
+    //    // Payment Service
+    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
+    //            "Payment Service", 
+    //            "/payment-service/api-docs", 
+    //            "payment-service"));
+    //    
+    //    // Notification Service
+    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
+    //            "Notification Service", 
+    //            "/notification-service/api-docs", 
+    //            "notification-service"));
+    //    
+    //    return urls;
+    //}
 }
