@@ -1,12 +1,12 @@
 server:
-  port: 8082
+  port: 8084
 
 spring:
   application:
-    name: booking-service
+    name: ticket-service
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/booking_service
+    url: jdbc:postgresql://localhost:5432/ticket_service
     username: postgres
     password: postgres
     hikari:
@@ -25,33 +25,13 @@ spring:
   
   kafka:
     bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      properties:
-        enable.idempotence: true
-        acks: all
     consumer:
-      group-id: booking-service-group
+      group-id: ticket-service-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "com.moviebooking.*"
-
-  data:
-    redis:
-      host: localhost
-      port: 6379
-
-# Redisson Configuration
-redisson:
-  config: |
-    singleServerConfig:
-      address: "redis://localhost:6379"
-      connectionMinimumIdleSize: 10
-      connectionPoolSize: 64
-      database: 0
 
 eureka:
   client:
@@ -75,11 +55,6 @@ management:
     metrics:
       export:
         enabled: true
-
-# Kafka Topics
-kafka:
-  topics:
-    booking-confirmed: booking-confirmed
 
 logging:
   level:

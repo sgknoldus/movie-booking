@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
     @UniqueConstraint(columnNames = {"show_id", "seat_number"})
 })
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
@@ -45,8 +47,11 @@ public class SeatAvailability {
     @Column(name = "locked_until")
     private LocalDateTime lockedUntil;
     
+    @Column(name = "show_id", nullable = false)
+    private Long showId;
+    
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "show_id", nullable = false)
+    @JoinColumn(name = "show_id", nullable = false, insertable = false, updatable = false)
     private Show show;
     
     @CreatedDate
@@ -63,5 +68,13 @@ public class SeatAvailability {
     
     public enum SeatStatus {
         AVAILABLE, BOOKED, LOCKED, BLOCKED
+    }
+    
+    public boolean isAvailable() {
+        return this.status == SeatStatus.AVAILABLE;
+    }
+    
+    public void setAvailable(boolean available) {
+        this.status = available ? SeatStatus.AVAILABLE : SeatStatus.BOOKED;
     }
 }

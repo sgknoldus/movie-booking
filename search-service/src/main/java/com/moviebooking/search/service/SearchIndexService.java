@@ -149,6 +149,32 @@ public class SearchIndexService {
         log.info("Request to update available seats for show ID: {}", showId);
     }
     
+    public void updateShowSeatAvailability(Long showId, List<String> seatNumbers, boolean available) {
+        try {
+            showSearchRepository.findById(showId.toString()).ifPresent(showDoc -> {
+                if (!available) {
+                    // Seats are being booked, decrease available seats
+                    int currentAvailable = showDoc.getAvailableSeats();
+                    int newAvailable = Math.max(0, currentAvailable - seatNumbers.size());
+                    showDoc.setAvailableSeats(newAvailable);
+                } else {
+                    // Seats are being released, increase available seats
+                    int currentAvailable = showDoc.getAvailableSeats();
+                    int newAvailable = currentAvailable + seatNumbers.size();
+                    showDoc.setAvailableSeats(newAvailable);
+                }
+                
+                showDoc.setUpdatedAt(LocalDateTime.now());
+                showSearchRepository.save(showDoc);
+                
+                log.info("Updated show {} seat availability. Seats {} set to available={}", 
+                        showId, seatNumbers, available);
+            });
+        } catch (Exception e) {
+            log.error("Failed to update seat availability for show: {}", showId, e);
+        }
+    }
+    
     public void reindexAllData() {
         log.info("Starting full reindex of all data...");
         // This would typically call the Theatre Service APIs to get all data and reindex

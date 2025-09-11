@@ -20,6 +20,7 @@
         <module>user-service</module>
         <module>payment-service</module>
         <module>notification-service</module>
+        <module>ticket-service</module>
         <module>common-lib</module>
     </modules>
 

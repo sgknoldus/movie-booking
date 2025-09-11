@@ -16,6 +16,9 @@ public interface SeatAvailabilityRepository extends JpaRepository<SeatAvailabili
     
     List<SeatAvailability> findByShowIdAndStatus(Long showId, SeatAvailability.SeatStatus status);
     
+    @Query("SELECT s FROM SeatAvailability s WHERE s.show.id = :showId AND s.seatNumber = :seatNumber")
+    java.util.Optional<SeatAvailability> findByShowIdAndSeatNumber(@Param("showId") Long showId, @Param("seatNumber") String seatNumber);
+    
     @Query("SELECT COUNT(s) FROM SeatAvailability s WHERE s.show.id = :showId AND s.status = :status")
     Long countByShowIdAndStatus(@Param("showId") Long showId, @Param("status") SeatAvailability.SeatStatus status);
     
