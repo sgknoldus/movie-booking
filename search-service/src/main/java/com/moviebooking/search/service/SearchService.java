@@ -24,6 +24,7 @@ import java.util.stream.StreamSupport;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import jakarta.annotation.PostConstruct;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +34,18 @@ public class SearchService {
     private final TheatreSearchRepository theatreSearchRepository;
     private final ShowSearchRepository showSearchRepository;
     private final ElasticsearchOperations elasticsearchOperations;
+    
+    @PostConstruct
+    public void initializeIndices() {
+        try {
+            log.info("Initializing Elasticsearch indices on startup...");
+            recreateIndices();
+            log.info("Elasticsearch indices initialized successfully");
+        } catch (Exception e) {
+            log.error("Failed to initialize Elasticsearch indices: {}", e.getMessage(), e);
+            // Don't throw here to allow application to start, but log the error
+        }
+    }
     
     // City Search Methods
     public List<CityDocument> searchCities(String query) {
@@ -176,6 +189,48 @@ public class SearchService {
         } catch (Exception e) {
             log.error("Elasticsearch health check failed: {}", e.getMessage());
             return false;
+        }
+    }
+    
+    // Method to recreate all indices with correct mappings
+    public void recreateIndices() {
+        try {
+            log.info("Starting to recreate Elasticsearch indices...");
+            
+            // Delete existing indices
+            if (elasticsearchOperations.indexOps(CityDocument.class).exists()) {
+                elasticsearchOperations.indexOps(CityDocument.class).delete();
+                log.info("Deleted cities index");
+            }
+            
+            if (elasticsearchOperations.indexOps(TheatreDocument.class).exists()) {
+                elasticsearchOperations.indexOps(TheatreDocument.class).delete();
+                log.info("Deleted theatres index");
+            }
+            
+            if (elasticsearchOperations.indexOps(ShowDocument.class).exists()) {
+                elasticsearchOperations.indexOps(ShowDocument.class).delete();
+                log.info("Deleted shows index");
+            }
+            
+            // Create new indices with correct mappings
+            elasticsearchOperations.indexOps(CityDocument.class).create();
+            elasticsearchOperations.indexOps(CityDocument.class).putMapping();
+            log.info("Created cities index with new mappings");
+            
+            elasticsearchOperations.indexOps(TheatreDocument.class).create();
+            elasticsearchOperations.indexOps(TheatreDocument.class).putMapping();
+            log.info("Created theatres index with new mappings");
+            
+            elasticsearchOperations.indexOps(ShowDocument.class).create();
+            elasticsearchOperations.indexOps(ShowDocument.class).putMapping();
+            log.info("Created shows index with new mappings");
+            
+            log.info("Successfully recreated all Elasticsearch indices");
+            
+        } catch (Exception e) {
+            log.error("Failed to recreate Elasticsearch indices: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to recreate indices", e);
         }
     }
 }

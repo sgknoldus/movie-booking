@@ -30,9 +30,9 @@ public class CityDocument {
     @Field(type = FieldType.Keyword)
     private String zipCode;
     
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
     
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
 }

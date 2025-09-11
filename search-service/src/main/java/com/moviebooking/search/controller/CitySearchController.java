@@ -37,4 +37,15 @@ public class CitySearchController {
         List<CityDocument> results = searchService.searchCitiesByCountry(country);
         return ResponseEntity.ok(results);
     }
+    
+    @PostMapping("/admin/recreate-indices")
+    @Operation(summary = "Recreate Elasticsearch indices", description = "Delete and recreate all search indices with correct mappings")
+    public ResponseEntity<String> recreateIndices() {
+        try {
+            searchService.recreateIndices();
+            return ResponseEntity.ok("Successfully recreated all Elasticsearch indices");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Failed to recreate indices: " + e.getMessage());
+        }
+    }
 }

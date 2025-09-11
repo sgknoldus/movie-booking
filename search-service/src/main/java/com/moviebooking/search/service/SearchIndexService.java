@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.elasticsearch.core.geo.GeoPoint;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -26,7 +25,6 @@ public class SearchIndexService {
     private final TheatreSearchRepository theatreSearchRepository;
     private final ShowSearchRepository showSearchRepository;
     
-    @Transactional("transactionManager")
     public void indexCity(JsonNode cityData) {
         try {
             CityDocument cityDoc = new CityDocument();
@@ -50,7 +48,6 @@ public class SearchIndexService {
         }
     }
     
-    @Transactional("transactionManager")
     public void indexTheatre(JsonNode theatreData) {
         try {
             TheatreDocument theatreDoc = new TheatreDocument();
@@ -87,7 +84,6 @@ public class SearchIndexService {
         }
     }
     
-    @Transactional("transactionManager")
     public void indexShow(JsonNode showData) {
         try {
             ShowDocument showDoc = new ShowDocument();
@@ -120,7 +116,6 @@ public class SearchIndexService {
         }
     }
     
-    @Transactional("transactionManager")
     public void deleteCity(String cityId) {
         try {
             citySearchRepository.deleteById(cityId);
@@ -130,7 +125,6 @@ public class SearchIndexService {
         }
     }
     
-    @Transactional("transactionManager")
     public void deleteTheatre(String theatreId) {
         try {
             theatreSearchRepository.deleteById(theatreId);
@@ -140,7 +134,6 @@ public class SearchIndexService {
         }
     }
     
-    @Transactional("transactionManager")
     public void deleteShow(String showId) {
         try {
             showSearchRepository.deleteById(showId);
@@ -163,11 +156,28 @@ public class SearchIndexService {
     }
     
     private LocalDateTime parseDateTime(String dateTimeStr) {
-        try {
-            return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        } catch (Exception e) {
-            log.warn("Failed to parse datetime: {}, using current time", dateTimeStr);
+        if (dateTimeStr == null || dateTimeStr.trim().isEmpty()) {
+            log.warn("Null or empty datetime string, using current time");
             return LocalDateTime.now();
+        }
+        
+        try {
+            // Try parsing as full ISO datetime first (e.g., "2025-09-11T14:30:00")
+            return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (Exception e1) {
+            try {
+                // Try parsing as date only and add midnight time (e.g., "2025-09-11")
+                return LocalDateTime.parse(dateTimeStr + "T00:00:00", DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            } catch (Exception e2) {
+                try {
+                    // Try parsing with different datetime patterns
+                    return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                } catch (Exception e3) {
+                    log.warn("Failed to parse datetime '{}' with all attempted formats, using current time. Errors: ISO_LOCAL_DATE_TIME={}, ISO_DATE_with_midnight={}, yyyy-MM-dd_HH:mm:ss={}", 
+                        dateTimeStr, e1.getMessage(), e2.getMessage(), e3.getMessage());
+                    return LocalDateTime.now();
+                }
+            }
         }
     }
 }

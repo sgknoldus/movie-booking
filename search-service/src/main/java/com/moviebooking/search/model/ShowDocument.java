@@ -25,10 +25,10 @@ public class ShowDocument {
     @Field(type = FieldType.Text, analyzer = "standard")
     private String movieTitle;
     
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss")
     private LocalDateTime showDateTime;
     
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss")
     private LocalDateTime endDateTime;
     
     @Field(type = FieldType.Double)
@@ -61,9 +61,9 @@ public class ShowDocument {
     @Field(type = FieldType.Text, analyzer = "standard")
     private String cityName;
     
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
     
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
 }

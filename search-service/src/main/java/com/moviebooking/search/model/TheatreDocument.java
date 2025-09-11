@@ -47,9 +47,9 @@ public class TheatreDocument {
     @Field(type = FieldType.Text)
     private String cityCountry;
     
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
     
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
 }

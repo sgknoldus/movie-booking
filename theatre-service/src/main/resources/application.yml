@@ -28,7 +28,6 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     producer:
-      transaction-id-prefix: theatre-service-
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: all

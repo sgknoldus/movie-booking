@@ -27,7 +27,6 @@ public class OutboxEventPublisher {
     private String theatreEventsTopic;
     
     @Scheduled(fixedDelay = 5000) // Run every 5 seconds
-    @Transactional
     public void publishPendingEvents() {
         List<OutboxEvent> pendingEvents = outboxEventService.getPendingEvents();
         
@@ -80,7 +79,6 @@ public class OutboxEventPublisher {
     }
     
     @Scheduled(fixedDelay = 300000) // Run every 5 minutes
-    @Transactional
     public void retryFailedEvents() {
         LocalDateTime cutoffTime = LocalDateTime.now().minusHours(1);
         List<OutboxEvent> failedEvents = outboxEventRepository.findFailedEventsForRetry(3, cutoffTime);

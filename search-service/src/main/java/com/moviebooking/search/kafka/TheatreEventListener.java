@@ -21,7 +21,6 @@ public class TheatreEventListener {
     
     @KafkaListener(topics = "${app.kafka.topics.theatre-events:theatre-events}", 
                    groupId = "search-service-group")
-    @Transactional("transactionManager")
     public void handleTheatreEvent(@Payload String eventData, 
                                   @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
                                   @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
