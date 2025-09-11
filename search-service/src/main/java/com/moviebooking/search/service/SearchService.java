@@ -38,9 +38,28 @@ public class SearchService {
     @PostConstruct
     public void initializeIndices() {
         try {
-            log.info("Initializing Elasticsearch indices on startup...");
-            recreateIndices();
-            log.info("Elasticsearch indices initialized successfully");
+            log.info("Checking Elasticsearch indices on startup...");
+            
+            // Only create indices if they don't exist, don't delete existing data
+            if (!elasticsearchOperations.indexOps(CityDocument.class).exists()) {
+                elasticsearchOperations.indexOps(CityDocument.class).create();
+                elasticsearchOperations.indexOps(CityDocument.class).putMapping();
+                log.info("Created cities index with mappings");
+            }
+            
+            if (!elasticsearchOperations.indexOps(TheatreDocument.class).exists()) {
+                elasticsearchOperations.indexOps(TheatreDocument.class).create();
+                elasticsearchOperations.indexOps(TheatreDocument.class).putMapping();
+                log.info("Created theatres index with mappings");
+            }
+            
+            if (!elasticsearchOperations.indexOps(ShowDocument.class).exists()) {
+                elasticsearchOperations.indexOps(ShowDocument.class).create();
+                elasticsearchOperations.indexOps(ShowDocument.class).putMapping();
+                log.info("Created shows index with mappings");
+            }
+            
+            log.info("Elasticsearch indices check completed");
         } catch (Exception e) {
             log.error("Failed to initialize Elasticsearch indices: {}", e.getMessage(), e);
             // Don't throw here to allow application to start, but log the error
@@ -49,18 +68,46 @@ public class SearchService {
     
     // City Search Methods
     public List<CityDocument> searchCities(String query) {
-        if (query == null || query.trim().isEmpty()) {
-            return (List<CityDocument>) citySearchRepository.findAll();
+        try {
+            if (query == null || query.trim().isEmpty()) {
+                return StreamSupport.stream(citySearchRepository.findAll().spliterator(), false)
+                        .collect(Collectors.toList());
+            }
+            return citySearchRepository.findByNameContainingIgnoreCase(query);
+        } catch (org.springframework.data.elasticsearch.core.convert.ConversionException e) {
+            log.error("Elasticsearch conversion error for cities search, corrupted data detected: {}", e.getMessage());
+            log.warn("To fix this issue, call POST /api/v1/search/cities/admin/recreate-indices to recreate indices with correct mappings");
+            return List.of();
+        } catch (Exception e) {
+            log.error("Failed to search cities: {}", e.getMessage(), e);
+            return List.of();
         }
-        return citySearchRepository.findByNameContainingIgnoreCase(query);
     }
     
     public List<CityDocument> searchCitiesByState(String state) {
-        return citySearchRepository.findByStateIgnoreCase(state);
+        try {
+            return citySearchRepository.findByStateIgnoreCase(state);
+        } catch (org.springframework.data.elasticsearch.core.convert.ConversionException e) {
+            log.error("Elasticsearch conversion error for cities by state search, corrupted data detected: {}", e.getMessage());
+            log.warn("To fix this issue, call POST /api/v1/search/cities/admin/recreate-indices to recreate indices with correct mappings");
+            return List.of();
+        } catch (Exception e) {
+            log.error("Failed to search cities by state: {}", e.getMessage(), e);
+            return List.of();
+        }
     }
     
     public List<CityDocument> searchCitiesByCountry(String country) {
-        return citySearchRepository.findByCountryIgnoreCase(country);
+        try {
+            return citySearchRepository.findByCountryIgnoreCase(country);
+        } catch (org.springframework.data.elasticsearch.core.convert.ConversionException e) {
+            log.error("Elasticsearch conversion error for cities by country search, corrupted data detected: {}", e.getMessage());
+            log.warn("To fix this issue, call POST /api/v1/search/cities/admin/recreate-indices to recreate indices with correct mappings");
+            return List.of();
+        } catch (Exception e) {
+            log.error("Failed to search cities by country: {}", e.getMessage(), e);
+            return List.of();
+        }
     }
     
     // Theatre Search Methods
