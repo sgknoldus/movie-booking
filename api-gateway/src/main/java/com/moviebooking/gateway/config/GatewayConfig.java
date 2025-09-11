@@ -70,6 +70,66 @@ public class GatewayConfig {
                 .route("swagger-notification-service", r -> r
                         .path("/notification-service/swagger-ui.html")
                         .uri("lb://notification-service"))
+                
+                // Swagger UI static resources for all services
+                .route("swagger-ui-resources-movie", r -> r
+                        .path("/movie-service/swagger-ui/**")
+                        .uri("lb://movie-service"))
+                .route("swagger-ui-resources-user", r -> r
+                        .path("/user-service/swagger-ui/**")
+                        .uri("lb://user-service"))
+                .route("swagger-ui-resources-theatre", r -> r
+                        .path("/theatre-service/swagger-ui/**")
+                        .uri("lb://theatre-service"))
+                .route("swagger-ui-resources-booking", r -> r
+                        .path("/booking-service/swagger-ui/**")
+                        .uri("lb://booking-service"))
+                .route("swagger-ui-resources-payment", r -> r
+                        .path("/payment-service/swagger-ui/**")
+                        .uri("lb://payment-service"))
+                .route("swagger-ui-resources-notification", r -> r
+                        .path("/notification-service/swagger-ui/**")
+                        .uri("lb://notification-service"))
+                
+                // API Documentation endpoints
+                .route("api-docs-movie", r -> r
+                        .path("/movie-service/api-docs/**")
+                        .uri("lb://movie-service"))
+                .route("api-docs-user", r -> r
+                        .path("/user-service/api-docs/**")
+                        .uri("lb://user-service"))
+                .route("api-docs-theatre", r -> r
+                        .path("/theatre-service/api-docs/**")
+                        .uri("lb://theatre-service"))
+                .route("api-docs-booking", r -> r
+                        .path("/booking-service/api-docs/**")
+                        .uri("lb://booking-service"))
+                .route("api-docs-payment", r -> r
+                        .path("/payment-service/api-docs/**")
+                        .uri("lb://payment-service"))
+                .route("api-docs-notification", r -> r
+                        .path("/notification-service/api-docs/**")
+                        .uri("lb://notification-service"))
+                
+                // Webjars for Swagger dependencies
+                .route("webjars-movie", r -> r
+                        .path("/movie-service/webjars/**")
+                        .uri("lb://movie-service"))
+                .route("webjars-user", r -> r
+                        .path("/user-service/webjars/**")
+                        .uri("lb://user-service"))
+                .route("webjars-theatre", r -> r
+                        .path("/theatre-service/webjars/**")
+                        .uri("lb://theatre-service"))
+                .route("webjars-booking", r -> r
+                        .path("/booking-service/webjars/**")
+                        .uri("lb://booking-service"))
+                .route("webjars-payment", r -> r
+                        .path("/payment-service/webjars/**")
+                        .uri("lb://payment-service"))
+                .route("webjars-notification", r -> r
+                        .path("/notification-service/webjars/**")
+                        .uri("lb://notification-service"))
                 .build();
     }
 }
