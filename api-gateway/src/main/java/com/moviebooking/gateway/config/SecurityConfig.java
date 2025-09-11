@@ -29,6 +29,8 @@ public class SecurityConfig {
                     "/api-docs/**",
                     "/api-docs",
                     "/webjars/**",
+                    // Custom documentation endpoint
+                    "/docs",
                     // Public authentication endpoints
                     "/api/auth/**",
                     // Health and management endpoints

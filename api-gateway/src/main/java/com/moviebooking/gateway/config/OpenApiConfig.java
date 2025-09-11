@@ -30,8 +30,9 @@ public class OpenApiConfig {
         
         properties.setUrls(urls);
         
-        // Disable the default URL to force using the dropdown
-        properties.setUrl(null);
+        // CRITICAL: Explicitly disable the default URL and force multi-spec mode
+        properties.setUrl(null);  // Must be null to enable multi-spec mode
+        properties.setTryItOutEnabled(true);
         
         return properties;
     }

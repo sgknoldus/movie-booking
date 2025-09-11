@@ -1,0 +1,30 @@
+{
+  "configUrl": "/api-docs/swagger-config",
+  "urls": [
+    {
+      "name": "User Service",
+      "url": "/user-service/api-docs"
+    },
+    {
+      "name": "Movie Service", 
+      "url": "/movie-service/api-docs"
+    },
+    {
+      "name": "Theatre Service",
+      "url": "/theatre-service/api-docs"
+    },
+    {
+      "name": "Booking Service",
+      "url": "/booking-service/api-docs"
+    },
+    {
+      "name": "Payment Service",
+      "url": "/payment-service/api-docs"
+    },
+    {
+      "name": "Notification Service",
+      "url": "/notification-service/api-docs"
+    }
+  ],
+  "validatorUrl": ""
+}
