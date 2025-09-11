@@ -17,10 +17,18 @@ public class SecurityConfig {
             .authorizeExchange(exchanges -> exchanges
                 // Allow Swagger and API docs for all services
                 .pathMatchers(
+                    // Individual service Swagger endpoints
                     "/*/swagger-ui.html",
                     "/*/swagger-ui/**", 
                     "/*/api-docs/**",
+                    "/*/api-docs",
                     "/*/webjars/**",
+                    // Unified Gateway Swagger endpoints
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/api-docs/**",
+                    "/api-docs",
+                    "/webjars/**",
                     // Public authentication endpoints
                     "/api/auth/**",
                     // Health and management endpoints

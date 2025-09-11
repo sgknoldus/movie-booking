@@ -91,7 +91,27 @@ public class GatewayConfig {
                         .path("/notification-service/swagger-ui/**")
                         .uri("lb://notification-service"))
                 
-                // API Documentation endpoints
+                // API Documentation endpoints - exact paths
+                .route("api-docs-movie-exact", r -> r
+                        .path("/movie-service/api-docs")
+                        .uri("lb://movie-service"))
+                .route("api-docs-user-exact", r -> r
+                        .path("/user-service/api-docs")
+                        .uri("lb://user-service"))
+                .route("api-docs-theatre-exact", r -> r
+                        .path("/theatre-service/api-docs")
+                        .uri("lb://theatre-service"))
+                .route("api-docs-booking-exact", r -> r
+                        .path("/booking-service/api-docs")
+                        .uri("lb://booking-service"))
+                .route("api-docs-payment-exact", r -> r
+                        .path("/payment-service/api-docs")
+                        .uri("lb://payment-service"))
+                .route("api-docs-notification-exact", r -> r
+                        .path("/notification-service/api-docs")
+                        .uri("lb://notification-service"))
+                        
+                // API Documentation endpoints - with sub-paths
                 .route("api-docs-movie", r -> r
                         .path("/movie-service/api-docs/**")
                         .uri("lb://movie-service"))
