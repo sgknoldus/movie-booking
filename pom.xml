@@ -14,6 +14,7 @@
         <module>discovery-service</module>
         <module>api-gateway</module>
         <module>theatre-service</module>
+        <module>search-service</module>
         <module>booking-service</module>
         <module>movie-service</module>
         <module>user-service</module>

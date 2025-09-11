@@ -1,15 +1,13 @@
-package com.moviebooking.theatre;
+package com.moviebooking.search;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.kafka.annotation.EnableKafka;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @SpringBootApplication
 @EnableKafka
-@EnableTransactionManagement
-public class TheatreServiceApplication {
+public class SearchServiceApplication {
     public static void main(String[] args) {
-        SpringApplication.run(TheatreServiceApplication.class, args);
+        SpringApplication.run(SearchServiceApplication.class, args);
     }
 }

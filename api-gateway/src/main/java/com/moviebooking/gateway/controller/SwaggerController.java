@@ -8,12 +8,37 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @RestController
 public class SwaggerController {
 
     @GetMapping(value = "/docs", produces = MediaType.TEXT_HTML_VALUE)
     public Mono<String> swaggerUi() {
         return Mono.just(getCustomSwaggerHtml());
+    }
+
+    @GetMapping(value = "/api-docs/swagger-config", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<Map<String, Object>> swaggerConfig() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("configUrl", "/api-docs/swagger-config");
+        config.put("oauth2RedirectUrl", "http://localhost:8080/webjars/swagger-ui/oauth2-redirect.html");
+        config.put("tryItOutEnabled", true);
+        config.put("validatorUrl", "");
+        
+        List<Map<String, String>> urls = List.of(
+            Map.of("url", "/user-service/api-docs", "name", "User Service"),
+            Map.of("url", "/movie-service/api-docs", "name", "Movie Service"),
+            Map.of("url", "/theatre-service/api-docs", "name", "Theatre Service"),
+            Map.of("url", "/booking-service/api-docs", "name", "Booking Service"),
+            Map.of("url", "/payment-service/api-docs", "name", "Payment Service"),
+            Map.of("url", "/notification-service/api-docs", "name", "Notification Service")
+        );
+        config.put("urls", urls);
+        
+        return Mono.just(config);
     }
 
     private String getCustomSwaggerHtml() {

@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: api-gateway
+  webflux:
+    static-path-pattern: /webjars/**
+  web:
+    resources:
+      static-locations: classpath:/META-INF/resources/webjars/
   cloud:
     gateway:
       discovery:
@@ -67,22 +72,9 @@ logging:
 
 springdoc:
   api-docs:
-    enabled: true
-    path: /api-docs
+    enabled: false  # Disable gateway's own API docs
   swagger-ui:
     enabled: true
     path: /swagger-ui.html
     disable-swagger-default-url: true
-    urls:
-      - name: User Service
-        url: /user-service/api-docs
-      - name: Movie Service
-        url: /movie-service/api-docs
-      - name: Theatre Service
-        url: /theatre-service/api-docs
-      - name: Booking Service
-        url: /booking-service/api-docs
-      - name: Payment Service
-        url: /payment-service/api-docs
-      - name: Notification Service
-        url: /notification-service/api-docs
+    config-url: /api-docs/swagger-config

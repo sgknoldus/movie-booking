@@ -11,10 +11,30 @@ public class GatewayConfig {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
-                // Theatre Service Routes
-                .route("theatre-service", r -> r
-                        .path("/api/theatres/**")
+                // Theatre Service Routes - Updated to use v1 API
+                .route("theatre-service-cities", r -> r
+                        .path("/api/v1/cities/**")
                         .uri("lb://theatre-service"))
+                .route("theatre-service-theatres", r -> r
+                        .path("/api/v1/theatres/**")
+                        .uri("lb://theatre-service"))
+                .route("theatre-service-screens", r -> r
+                        .path("/api/v1/screens/**")
+                        .uri("lb://theatre-service"))
+                .route("theatre-service-shows", r -> r
+                        .path("/api/v1/shows/**")
+                        .uri("lb://theatre-service"))
+                
+                // Search Service Routes
+                .route("search-service-cities", r -> r
+                        .path("/api/v1/search/cities/**")
+                        .uri("lb://search-service"))
+                .route("search-service-theatres", r -> r
+                        .path("/api/v1/search/theatres/**")
+                        .uri("lb://search-service"))
+                .route("search-service-shows", r -> r
+                        .path("/api/v1/search/shows/**")
+                        .uri("lb://search-service"))
                 
                 // Movie Service Routes
                 .route("movie-service", r -> r
@@ -41,7 +61,7 @@ public class GatewayConfig {
                         .path("/api/payments/**")
                         .uri("lb://payment-service"))
                 
-                // Show Service Routes (Theatre Service)
+                // Legacy Show Service Routes (Theatre Service) - Deprecated, use /api/v1/shows instead
                 .route("show-service", r -> r
                         .path("/api/shows/**")
                         .uri("lb://theatre-service"))
@@ -70,6 +90,9 @@ public class GatewayConfig {
                 .route("swagger-notification-service", r -> r
                         .path("/notification-service/swagger-ui.html")
                         .uri("lb://notification-service"))
+                .route("swagger-search-service", r -> r
+                        .path("/search-service/swagger-ui.html")
+                        .uri("lb://search-service"))
                 
                 // Swagger UI static resources for all services
                 .route("swagger-ui-resources-movie", r -> r
@@ -90,6 +113,9 @@ public class GatewayConfig {
                 .route("swagger-ui-resources-notification", r -> r
                         .path("/notification-service/swagger-ui/**")
                         .uri("lb://notification-service"))
+                .route("swagger-ui-resources-search", r -> r
+                        .path("/search-service/swagger-ui/**")
+                        .uri("lb://search-service"))
                 
                 // API Documentation endpoints - exact paths
                 .route("api-docs-movie-exact", r -> r
@@ -116,6 +142,10 @@ public class GatewayConfig {
                         .path("/notification-service/api-docs")
                         .filters(f -> f.rewritePath("/notification-service/api-docs", "/api-docs"))
                         .uri("lb://notification-service"))
+                .route("api-docs-search-exact", r -> r
+                        .path("/search-service/api-docs")
+                        .filters(f -> f.rewritePath("/search-service/api-docs", "/api-docs"))
+                        .uri("lb://search-service"))
                         
                 // API Documentation endpoints - with sub-paths
                 .route("api-docs-movie", r -> r
@@ -142,8 +172,12 @@ public class GatewayConfig {
                         .path("/notification-service/api-docs/**")
                         .filters(f -> f.rewritePath("/notification-service/(?<segment>.*)", "/${segment}"))
                         .uri("lb://notification-service"))
+                .route("api-docs-search", r -> r
+                        .path("/search-service/api-docs/**")
+                        .filters(f -> f.rewritePath("/search-service/(?<segment>.*)", "/${segment}"))
+                        .uri("lb://search-service"))
                 
-                // Webjars for Swagger dependencies
+                // Webjars for individual services
                 .route("webjars-movie", r -> r
                         .path("/movie-service/webjars/**")
                         .uri("lb://movie-service"))
@@ -162,6 +196,9 @@ public class GatewayConfig {
                 .route("webjars-notification", r -> r
                         .path("/notification-service/webjars/**")
                         .uri("lb://notification-service"))
+                .route("webjars-search", r -> r
+                        .path("/search-service/webjars/**")
+                        .uri("lb://search-service"))
                 .build();
     }
 }
