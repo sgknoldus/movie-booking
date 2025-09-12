@@ -18,37 +18,44 @@ import java.util.Map;
 @Configuration
 @EnableKafka
 public class KafkaConsumerConfig {
-    
+
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
-    
+
     @Value("${spring.kafka.consumer.group-id}")
     private String groupId;
-    
+
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        
-        // Use ErrorHandlingDeserializer to handle serialization exceptions gracefully
+
+        // ErrorHandlingDeserializer wrapper
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
-        
-        // Configure the actual deserializers
+
+        // Actual delegate deserializers
         configProps.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
         configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
-        
-        // JsonDeserializer configuration with proper prefixes for ErrorHandlingDeserializer
-        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS + "." + JsonDeserializer.TRUSTED_PACKAGES, "*");
-        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS + "." + JsonDeserializer.VALUE_DEFAULT_TYPE, "com.moviebooking.common.events.booking.BookingConfirmedEvent");
-        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS + "." + JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
-        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS + "." + JsonDeserializer.TYPE_MAPPINGS, "bookingConfirmedEvent:com.moviebooking.common.events.booking.BookingConfirmedEvent");
-        
+
+        // ✅ FIX: Trust your event package
+        configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "com.moviebooking.common.events.booking");
+        // If you want to allow everything (less secure):
+        // configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+
+        // Optional: disable type headers and set default type
+        configProps.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.moviebooking.common.events.booking.BookingConfirmedEvent");
+
+        // Optional: type mappings if multiple events
+        configProps.put(JsonDeserializer.TYPE_MAPPINGS,
+                "bookingConfirmedEvent:com.moviebooking.common.events.booking.BookingConfirmedEvent");
+
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
-    
+
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();

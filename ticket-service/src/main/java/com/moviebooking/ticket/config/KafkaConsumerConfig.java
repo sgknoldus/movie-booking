@@ -40,12 +40,17 @@ public class KafkaConsumerConfig {
         configProps.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
         configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
         
-        // JsonDeserializer configuration with proper prefixes for ErrorHandlingDeserializer
-        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS + "." + JsonDeserializer.TRUSTED_PACKAGES, "*");
-        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS + "." + JsonDeserializer.VALUE_DEFAULT_TYPE, "com.moviebooking.common.events.booking.BookingConfirmedEvent");
-        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS + "." + JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
-        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS + "." + JsonDeserializer.TYPE_MAPPINGS, "bookingConfirmedEvent:com.moviebooking.common.events.booking.BookingConfirmedEvent");
-        
+         configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "com.moviebooking.common.events.booking");
+        // If you want to allow everything (less secure):
+        // configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+
+        // Optional: disable type headers and set default type
+        configProps.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.moviebooking.common.events.booking.BookingConfirmedEvent");
+
+        // Optional: type mappings if multiple events
+        configProps.put(JsonDeserializer.TYPE_MAPPINGS,
+                "bookingConfirmedEvent:com.moviebooking.common.events.booking.BookingConfirmedEvent");      
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
     
