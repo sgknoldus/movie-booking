@@ -6,7 +6,7 @@ import com.moviebooking.booking.client.TheatreServiceClient;
 import com.moviebooking.booking.domain.Booking;
 import com.moviebooking.booking.domain.BookingStatus;
 import com.moviebooking.booking.dto.*;
-import com.moviebooking.booking.events.BookingConfirmedEvent;
+import com.moviebooking.common.events.booking.BookingConfirmedEvent;
 import com.moviebooking.booking.exception.BookingException;
 import com.moviebooking.booking.repository.BookingRepository;
 import lombok.RequiredArgsConstructor;

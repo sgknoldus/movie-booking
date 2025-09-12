@@ -3,7 +3,7 @@ package com.moviebooking.ticket.service;
 import com.moviebooking.ticket.domain.Ticket;
 import com.moviebooking.ticket.domain.TicketStatus;
 import com.moviebooking.ticket.dto.TicketResponse;
-import com.moviebooking.booking.events.BookingConfirmedEvent;
+import com.moviebooking.common.events.booking.BookingConfirmedEvent;
 import com.moviebooking.ticket.exception.TicketException;
 import com.moviebooking.ticket.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
