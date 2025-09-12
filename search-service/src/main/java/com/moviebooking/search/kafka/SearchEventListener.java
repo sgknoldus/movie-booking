@@ -1,6 +1,6 @@
 package com.moviebooking.search.kafka;
 
-import com.moviebooking.search.events.BookingConfirmedEvent;
+import com.moviebooking.booking.events.BookingConfirmedEvent;
 import com.moviebooking.search.service.SearchIndexService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

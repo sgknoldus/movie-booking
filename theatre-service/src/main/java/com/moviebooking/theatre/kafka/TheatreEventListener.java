@@ -1,6 +1,6 @@
 package com.moviebooking.theatre.kafka;
 
-import com.moviebooking.theatre.events.BookingConfirmedEvent;
+import com.moviebooking.booking.events.BookingConfirmedEvent;
 import com.moviebooking.theatre.service.SeatAvailabilityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
