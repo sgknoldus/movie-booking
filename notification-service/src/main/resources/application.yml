@@ -43,9 +43,9 @@ notification:
 
 kafka:
   topics:
-    booking-confirmed: booking-confirmed-topic
-    booking-cancelled: booking-cancelled-topic
-    payment-completed: payment-completed-topic
+    booking-confirmed: booking-confirmed
+    booking-cancelled: booking-cancelled
+    payment-completed: payment-completed
 
 management:
   endpoints:
