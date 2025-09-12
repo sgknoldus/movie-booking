@@ -20,7 +20,8 @@ public class TheatreEventListener {
     private final SearchIndexService searchIndexService;
     
     @KafkaListener(topics = "${app.kafka.topics.theatre-events:theatre-events}", 
-                   groupId = "search-service-group")
+                   groupId = "search-service-group",
+                   containerFactory = "stringKafkaListenerContainerFactory")
     public void handleTheatreEvent(@Payload String eventData, 
                                   @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
                                   @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
