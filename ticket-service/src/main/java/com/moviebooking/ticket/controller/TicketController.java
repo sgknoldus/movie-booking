@@ -3,6 +3,7 @@ package com.moviebooking.ticket.controller;
 import com.moviebooking.ticket.dto.TicketResponse;
 import com.moviebooking.ticket.service.TicketService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Ticket", description = "Movie ticket management operations")
+@SecurityRequirement(name = "Bearer Authentication")
 public class TicketController {
 
     private final TicketService ticketService;

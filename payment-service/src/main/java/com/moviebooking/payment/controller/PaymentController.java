@@ -4,6 +4,7 @@ import com.moviebooking.payment.dto.PaymentRequest;
 import com.moviebooking.payment.dto.PaymentResponse;
 import com.moviebooking.payment.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Payment", description = "Payment processing operations")
+@SecurityRequirement(name = "Bearer Authentication")
 public class PaymentController {
 
     private final PaymentService paymentService;

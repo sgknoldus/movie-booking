@@ -4,6 +4,7 @@ import com.moviebooking.booking.dto.BookingRequest;
 import com.moviebooking.booking.dto.BookingResponse;
 import com.moviebooking.booking.service.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Booking", description = "Movie ticket booking operations")
+@SecurityRequirement(name = "Bearer Authentication")
 public class BookingController {
 
     private final BookingService bookingService;

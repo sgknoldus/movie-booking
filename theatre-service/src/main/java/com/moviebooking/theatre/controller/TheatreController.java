@@ -4,6 +4,7 @@ import com.moviebooking.theatre.model.TheatreRequest;
 import com.moviebooking.theatre.model.TheatreResponse;
 import com.moviebooking.theatre.service.TheatreService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.List;
 @RequestMapping("/api/v1/theatres")
 @RequiredArgsConstructor
 @Tag(name = "Theatre Management", description = "APIs for managing theatres")
+@SecurityRequirement(name = "Bearer Authentication")
 public class TheatreController {
     private final TheatreService theatreService;
     

@@ -30,13 +30,14 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/api/auth/**", 
-                    "/api-docs/**", 
-                    "/swagger-ui/**", 
+                    "/api/auth/**",
+                    "/api-docs/**",
+                    "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/webjars/**",
                     "/v3/api-docs/**",
-                    "/actuator/health"
+                    "/actuator/health",
+                    "/error"
                 ).permitAll()
                 .anyRequest().authenticated());
         

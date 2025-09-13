@@ -42,7 +42,7 @@ eureka:
     prefer-ip-address: true
 
 jwt:
-  secret: your-256-bit-secret-key-here-minimum-32-characters
+  secret: your-secure-jwt-secret-key-for-hs512-algorithm-minimum-64-characters-required-for-security
   token-validity-in-seconds: 86400
 
 management:

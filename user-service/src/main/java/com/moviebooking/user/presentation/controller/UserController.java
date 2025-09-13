@@ -5,6 +5,7 @@ import com.moviebooking.user.application.dto.UserProfileResponse;
 import com.moviebooking.user.application.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class UserController {
 
     @GetMapping("/{userId}")
     @Operation(summary = "Get user profile by ID")
+    @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<UserProfileResponse> getUserProfile(
             @Parameter(description = "User ID") 
             @PathVariable UUID userId) {
@@ -33,6 +35,7 @@ public class UserController {
 
     @GetMapping
     @Operation(summary = "Get all users (Admin only)")
+    @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<List<UserProfileResponse>> getAllUsers() {
         List<UserProfileResponse> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
@@ -40,6 +43,7 @@ public class UserController {
 
     @PutMapping("/{userId}")
     @Operation(summary = "Update user profile")
+    @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<UserProfileResponse> updateProfile(
             @Parameter(description = "User ID") 
             @PathVariable UUID userId,
@@ -50,6 +54,7 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     @Operation(summary = "Delete user account")
+    @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<Void> deleteUser(
             @Parameter(description = "User ID") 
             @PathVariable UUID userId) {

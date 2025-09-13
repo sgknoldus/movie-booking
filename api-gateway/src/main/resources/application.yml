@@ -13,7 +13,7 @@ spring:
     gateway:
       discovery:
         locator:
-          enabled: true
+          enabled: false
           lowerCaseServiceId: true
       # default-filters:
       #   - name: RequestRateLimiter
@@ -62,7 +62,7 @@ management:
         enabled: true
 
 jwt:
-  secret: your-256-bit-secret-key-here-minimum-32-characters
+  secret: your-secure-jwt-secret-key-for-hs512-algorithm-minimum-64-characters-required-for-security
   
 logging:
   level:

@@ -15,29 +15,8 @@ public class SecurityConfig {
         return http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .authorizeExchange(exchanges -> exchanges
-                // Allow Swagger and API docs for all services
-                .pathMatchers(
-                    // Individual service Swagger endpoints
-                    "/*/swagger-ui.html",
-                    "/*/swagger-ui/**", 
-                    "/*/api-docs/**",
-                    "/*/api-docs",
-                    "/*/webjars/**",
-                    // Unified Gateway Swagger endpoints
-                    "/swagger-ui.html",
-                    "/swagger-ui/**",
-                    "/api-docs/**",
-                    "/api-docs",
-                    "/webjars/**",
-                    // Custom documentation endpoint
-                    "/docs",
-                    // Public authentication endpoints
-                    "/api/auth/**",
-                    // Health and management endpoints
-                    "/actuator/**"
-                ).permitAll()
-                // Require authentication for all other requests
-                .anyExchange().authenticated()
+                // Allow all requests - authentication is handled at route level
+                .anyExchange().permitAll()
             )
             .build();
     }

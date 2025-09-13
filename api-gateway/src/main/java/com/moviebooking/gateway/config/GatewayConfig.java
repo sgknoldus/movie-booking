@@ -1,31 +1,71 @@
 package com.moviebooking.gateway.config;
 
+import com.moviebooking.gateway.security.JwtTokenValidator;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 
 @Configuration
 public class GatewayConfig {
 
+    private final JwtTokenValidator jwtTokenValidator;
+
+    public GatewayConfig(JwtTokenValidator jwtTokenValidator) {
+        this.jwtTokenValidator = jwtTokenValidator;
+    }
+
+    private GatewayFilter jwtAuthFilter() {
+        return (exchange, chain) -> {
+            String path = exchange.getRequest().getURI().getPath();
+            System.out.println("JWT Filter applied to: " + path);
+
+            String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            System.out.println("Authorization header: " + authHeader);
+
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                System.out.println("Missing or invalid Authorization header - returning 401");
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            }
+
+            String token = authHeader.substring(7);
+            if (!jwtTokenValidator.validateToken(token)) {
+                System.out.println("Invalid JWT token - returning 401");
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            }
+
+            System.out.println("JWT token validated successfully");
+            return chain.filter(exchange);
+        };
+    }
+
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
-                // Theatre Service Routes - Updated to use v1 API
+                // Theatre Service Routes - Updated to use v1 API (Protected)
                 .route("theatre-service-cities", r -> r
                         .path("/api/v1/cities/**")
+                        .filters(f -> f.filter(jwtAuthFilter()))
                         .uri("lb://theatre-service"))
                 .route("theatre-service-theatres", r -> r
                         .path("/api/v1/theatres/**")
+                        .filters(f -> f.filter(jwtAuthFilter()))
                         .uri("lb://theatre-service"))
                 .route("theatre-service-screens", r -> r
                         .path("/api/v1/screens/**")
+                        .filters(f -> f.filter(jwtAuthFilter()))
                         .uri("lb://theatre-service"))
                 .route("theatre-service-shows", r -> r
                         .path("/api/v1/shows/**")
+                        .filters(f -> f.filter(jwtAuthFilter()))
                         .uri("lb://theatre-service"))
                 
-                // Search Service Routes
+                // Search Service Routes (Public - no authentication required)
                 .route("search-service-cities", r -> r
                         .path("/api/v1/search/cities/**")
                         .uri("lb://search-service"))
@@ -36,14 +76,15 @@ public class GatewayConfig {
                         .path("/api/v1/search/shows/**")
                         .uri("lb://search-service"))
                 
-                // Movie Service Routes
+                // Movie Service Routes (Public - no authentication required)
                 .route("movie-service", r -> r
                         .path("/api/movies/**")
                         .uri("lb://movie-service"))
                 
-                // Booking Service Routes
+                // Booking Service Routes (Protected)
                 .route("booking-service", r -> r
                         .path("/api/bookings/**")
+                        .filters(f -> f.filter(jwtAuthFilter()))
                         .uri("lb://booking-service"))
                 
                 // User Service Routes - Public endpoints
@@ -54,21 +95,31 @@ public class GatewayConfig {
                 // User Service Routes - Protected endpoints
                 .route("user-service-protected", r -> r
                         .path("/api/users/**")
+                        .filters(f -> f.filter(jwtAuthFilter()))
                         .uri("lb://user-service"))
                 
-                // Payment Service Routes
+                // Payment Service Routes (Protected)
                 .route("payment-service", r -> r
                         .path("/api/payments/**")
+                        .filters(f -> f.filter(jwtAuthFilter()))
                         .uri("lb://payment-service"))
-                
-                // Legacy Show Service Routes (Theatre Service) - Deprecated, use /api/v1/shows instead
+
+                // Ticket Service Routes (Protected)
+                .route("ticket-service", r -> r
+                        .path("/api/tickets/**")
+                        .filters(f -> f.filter(jwtAuthFilter()))
+                        .uri("lb://ticket-service"))
+
+                // Legacy Show Service Routes (Theatre Service) - Deprecated, use /api/v1/shows instead (Protected)
                 .route("show-service", r -> r
                         .path("/api/shows/**")
+                        .filters(f -> f.filter(jwtAuthFilter()))
                         .uri("lb://theatre-service"))
                 
-                // Notification Service Routes
+                // Notification Service Routes (Protected)
                 .route("notification-service", r -> r
                         .path("/api/v1/notifications/**")
+                        .filters(f -> f.filter(jwtAuthFilter()))
                         .uri("lb://notification-service"))
                 
                 // Swagger UI Routes for all services
