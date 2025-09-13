@@ -80,6 +80,12 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        
         <!-- Spring Boot DevTools for hot reload -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

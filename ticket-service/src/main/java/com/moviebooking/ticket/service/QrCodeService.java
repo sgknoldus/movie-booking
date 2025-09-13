@@ -1,11 +1,11 @@
 package com.moviebooking.ticket.service;
 
-import lombok.extern.slf4j.Slf4j;
+import java.security.MessageDigest;
+import java.util.Base64;
+
 import org.springframework.stereotype.Service;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j

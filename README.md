@@ -4,6 +4,10 @@ A robust, scalable movie ticket booking platform built using Spring Boot microse
 
 ## System Architecture
 
+
+
+![Architecture Diagram](arc.png)
+
 The system is composed of multiple microservices, each handling specific business capabilities:
 
 ```
