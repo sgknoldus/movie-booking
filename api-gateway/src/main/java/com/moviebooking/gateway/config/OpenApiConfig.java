@@ -22,11 +22,11 @@ public class OpenApiConfig {
         // Configure URLs for all services
         Set<SwaggerUiConfigProperties.SwaggerUrl> urls = new HashSet<>();
         urls.add(new SwaggerUiConfigProperties.SwaggerUrl("User Service", "/user-service/api-docs", "user-service"));
-        urls.add(new SwaggerUiConfigProperties.SwaggerUrl("Movie Service", "/movie-service/api-docs", "movie-service"));
         urls.add(new SwaggerUiConfigProperties.SwaggerUrl("Theatre Service", "/theatre-service/api-docs", "theatre-service"));
         urls.add(new SwaggerUiConfigProperties.SwaggerUrl("Booking Service", "/booking-service/api-docs", "booking-service"));
         urls.add(new SwaggerUiConfigProperties.SwaggerUrl("Payment Service", "/payment-service/api-docs", "payment-service"));
         urls.add(new SwaggerUiConfigProperties.SwaggerUrl("Notification Service", "/notification-service/api-docs", "notification-service"));
+        urls.add(new SwaggerUiConfigProperties.SwaggerUrl("Search Service", "/search-service/api-docs", "search-service"));
         
         properties.setUrls(urls);
         

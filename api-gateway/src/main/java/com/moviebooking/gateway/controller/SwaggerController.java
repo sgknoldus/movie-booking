@@ -30,11 +30,11 @@ public class SwaggerController {
         
         List<Map<String, String>> urls = List.of(
             Map.of("url", "/user-service/api-docs", "name", "User Service"),
-            Map.of("url", "/movie-service/api-docs", "name", "Movie Service"),
             Map.of("url", "/theatre-service/api-docs", "name", "Theatre Service"),
             Map.of("url", "/booking-service/api-docs", "name", "Booking Service"),
             Map.of("url", "/payment-service/api-docs", "name", "Payment Service"),
-            Map.of("url", "/notification-service/api-docs", "name", "Notification Service")
+            Map.of("url", "/notification-service/api-docs", "name", "Notification Service"),
+            Map.of("url", "/search-service/api-docs", "name", "Search Service")
         );
         config.put("urls", urls);
         
@@ -94,8 +94,11 @@ public class SwaggerController {
                           ],
                           layout: "StandaloneLayout",
                           validatorUrl: config.validatorUrl || "",
-                          // Force dropdown mode - don't set a default URL
-                          // This ensures the dropdown is visible and functional
+                          tryItOutEnabled: config.tryItOutEnabled || true,
+                          // Explicitly set to null to force dropdown mode
+                          url: null,
+                          // Ensure the first spec is not loaded by default
+                          "urls.primaryName": null
                         });
                       })
                       .catch(error => {
@@ -104,11 +107,11 @@ public class SwaggerController {
                         window.ui = SwaggerUIBundle({
                           urls: [
                             {name: "User Service", url: "/user-service/api-docs"},
-                            {name: "Movie Service", url: "/movie-service/api-docs"}, 
                             {name: "Theatre Service", url: "/theatre-service/api-docs"},
                             {name: "Booking Service", url: "/booking-service/api-docs"},
                             {name: "Payment Service", url: "/payment-service/api-docs"},
-                            {name: "Notification Service", url: "/notification-service/api-docs"}
+                            {name: "Notification Service", url: "/notification-service/api-docs"},
+                            {name: "Search Service", url: "/search-service/api-docs"}
                           ],
                           dom_id: '#swagger-ui',
                           deepLinking: true,
@@ -119,7 +122,11 @@ public class SwaggerController {
                           plugins: [
                             SwaggerUIBundle.plugins.DownloadUrl
                           ],
-                          layout: "StandaloneLayout"
+                          layout: "StandaloneLayout",
+                          // Explicitly set to null to force dropdown mode
+                          url: null,
+                          // Ensure the first spec is not loaded by default
+                          "urls.primaryName": null
                         });
                       });
                   };
