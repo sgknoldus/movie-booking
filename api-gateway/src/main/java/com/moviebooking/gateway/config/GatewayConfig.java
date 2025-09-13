@@ -250,6 +250,7 @@ public class GatewayConfig {
                 .route("webjars-search", r -> r
                         .path("/search-service/webjars/**")
                         .uri("lb://search-service"))
+
                 .build();
     }
 }

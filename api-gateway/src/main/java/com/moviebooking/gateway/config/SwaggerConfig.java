@@ -1,63 +1,30 @@
 package com.moviebooking.gateway.config;
 
-import org.springdoc.core.properties.AbstractSwaggerUiConfigProperties;
-import org.springdoc.core.properties.SwaggerUiConfigProperties;
-import org.springframework.cloud.gateway.route.RouteDefinition;
-import org.springframework.cloud.gateway.route.RouteDefinitionLocator;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.Components;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 
-import java.util.ArrayList;
-import java.util.List;
-
-//@Configuration
+@Configuration
 public class SwaggerConfig {
 
-    // Commented out to avoid conflicts with application.yml configuration
-    // The service URLs are now configured in application.yml under springdoc.swagger-ui.urls
-    
-    //@Bean
-    //@Lazy(false)
-    //public List<AbstractSwaggerUiConfigProperties.SwaggerUrl> swaggerUrls() {
-    //    List<AbstractSwaggerUiConfigProperties.SwaggerUrl> urls = new ArrayList<>();
-    //    
-    //    // User Service
-    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-    //            "User Service", 
-    //            "/user-service/api-docs", 
-    //            "user-service"));
-    //    
-    //    // Movie Service
-    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-    //            "Movie Service", 
-    //            "/movie-service/api-docs", 
-    //            "movie-service"));
-    //    
-    //    // Theatre Service
-    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-    //            "Theatre Service", 
-    //            "/theatre-service/api-docs", 
-    //            "theatre-service"));
-    //    
-    //    // Booking Service
-    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-    //            "Booking Service", 
-    //            "/booking-service/api-docs", 
-    //            "booking-service"));
-    //    
-    //    // Payment Service
-    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-    //            "Payment Service", 
-    //            "/payment-service/api-docs", 
-    //            "payment-service"));
-    //    
-    //    // Notification Service
-    //    urls.add(new AbstractSwaggerUiConfigProperties.SwaggerUrl(
-    //            "Notification Service", 
-    //            "/notification-service/api-docs", 
-    //            "notification-service"));
-    //    
-    //    return urls;
-    //}
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Movie Booking System API Gateway")
+                        .description("Aggregated API documentation for all microservices through API Gateway")
+                        .version("1.0.0"))
+                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
+                .components(new Components()
+                        .addSecuritySchemes("Bearer Authentication",
+                            new SecurityScheme()
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")
+                                .description("Enter JWT token (obtainable from /api/auth/login endpoint)")));
+    }
 }

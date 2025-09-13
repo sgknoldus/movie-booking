@@ -72,9 +72,22 @@ logging:
 
 springdoc:
   api-docs:
-    enabled: false  # Disable gateway's own API docs
+    enabled: true  # Enable gateway's own API docs
   swagger-ui:
     enabled: true
     path: /swagger-ui.html
     disable-swagger-default-url: true
     config-url: /api-docs/swagger-config
+    urls:
+      - name: User Service
+        url: /user-service/api-docs
+      - name: Theatre Service
+        url: /theatre-service/api-docs
+      - name: Search Service
+        url: /search-service/api-docs
+      - name: Booking Service
+        url: /booking-service/api-docs
+      - name: Payment Service
+        url: /payment-service/api-docs
+      - name: Notification Service
+        url: /notification-service/api-docs
