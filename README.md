@@ -8,32 +8,7 @@ A robust, scalable movie ticket booking platform built using Spring Boot microse
 
 ![Architecture Diagram](arc.png)
 
-The system is composed of multiple microservices, each handling specific business capabilities:
 
-```
-                                   ┌─────────────────┐
-                                   │  Eureka Server  │
-                                   └────────┬────────┘
-                                           │
-                                   ┌───────┴────────┐
-                                   │  API Gateway   │
-                                   └───────┬────────┘
-            ┌──────────────────────────────┼──────────────────────────────┐
-            │                             │                             │
-    ┌───────┴───────┐            ┌────────┴────────┐            ┌───────┴──────┐
-    │ User Service  │            │Theatre Service  │            │Search Service│
-    └───────────────┘            └─────────────────┘            └──────────────┘
-                                          │
-           ┌──────────────────────────────┼──────────────────────────────┐
-           │                             │                             │
-    ┌──────┴──────┐            ┌─────────┴────────┐            ┌───────┴──────┐
-    │Booking Service│           │Ticket Service    │            │Payment Service│
-    └───────────────┘            └─────────────────┘            └──────────────┘
-                                          │
-                                ┌─────────┴─────────┐
-                                │Notification Service│
-                                └───────────────────┘
-```
 
 ## Technology Stack
 
