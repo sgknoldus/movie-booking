@@ -50,28 +50,33 @@ public class OutboxEventPublisher {
     
     private void publishEventToKafka(OutboxEvent event) {
         String key = event.getAggregateType() + "-" + event.getAggregateId();
-        
+
         log.debug("Sending Kafka message: topic={}, key={}, eventId={}", theatreEventsTopic, key, event.getId());
-        
+
         try {
-            CompletableFuture<SendResult<String, String>> future = 
-                kafkaTemplate.send(theatreEventsTopic, key, event.getEventData());
-            
-            future.whenComplete((result, ex) -> {
-                if (ex == null) {
-                    log.info("Successfully published outbox event {} to Kafka: topic={}, partition={}, offset={}, key={}", 
-                        event.getId(), theatreEventsTopic, result.getRecordMetadata().partition(), 
-                        result.getRecordMetadata().offset(), key);
-                    outboxEventService.markEventAsProcessed(event.getId());
-                } else {
-                    log.error("Failed to publish outbox event {} to Kafka: topic={}, key={}, error={}, errorType={}, retryCount={}", 
-                        event.getId(), theatreEventsTopic, key, ex.getMessage(), 
-                        ex.getClass().getSimpleName(), event.getRetryCount(), ex);
-                    outboxEventService.markEventAsFailed(event.getId());
-                }
+            // Use Kafka transactions for exactly-once semantics
+            kafkaTemplate.executeInTransaction(operations -> {
+                CompletableFuture<SendResult<String, String>> future =
+                    operations.send(theatreEventsTopic, key, event.getEventData());
+
+                future.whenComplete((result, ex) -> {
+                    if (ex == null) {
+                        log.info("Successfully published outbox event {} to Kafka: topic={}, partition={}, offset={}, key={}",
+                            event.getId(), theatreEventsTopic, result.getRecordMetadata().partition(),
+                            result.getRecordMetadata().offset(), key);
+                        outboxEventService.markEventAsProcessed(event.getId());
+                    } else {
+                        log.error("Failed to publish outbox event {} to Kafka: topic={}, key={}, error={}, errorType={}, retryCount={}",
+                            event.getId(), theatreEventsTopic, key, ex.getMessage(),
+                            ex.getClass().getSimpleName(), event.getRetryCount(), ex);
+                        outboxEventService.markEventAsFailed(event.getId());
+                    }
+                });
+                return true;
             });
+
         } catch (Exception e) {
-            log.error("Exception while sending Kafka message for outbox event {}: topic={}, key={}, error={}, errorType={}", 
+            log.error("Exception while sending Kafka message for outbox event {}: topic={}, key={}, error={}, errorType={}",
                 event.getId(), theatreEventsTopic, key, e.getMessage(), e.getClass().getSimpleName(), e);
             outboxEventService.markEventAsFailed(event.getId());
             throw e;

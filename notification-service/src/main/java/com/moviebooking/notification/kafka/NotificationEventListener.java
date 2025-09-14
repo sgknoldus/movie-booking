@@ -6,6 +6,7 @@ import com.moviebooking.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -19,9 +20,10 @@ public class NotificationEventListener {
     private final NotificationService notificationService;
 
     @KafkaListener(topics = "${kafka.topics.booking-confirmed}", groupId = "${spring.kafka.consumer.group-id}")
-    public void handleBookingConfirmation(BookingConfirmedEvent event) {
+    public void handleBookingConfirmation(BookingConfirmedEvent event, Acknowledgment acknowledgment) {
         if (event == null) {
             log.warn("Received null booking confirmation event, ignoring");
+            acknowledgment.acknowledge();
             return;
         }
 
@@ -29,38 +31,52 @@ public class NotificationEventListener {
         try {
             NotificationRequest request = createNotificationRequestFromBookingEvent(event);
             notificationService.createNotification(request);
+            acknowledgment.acknowledge();
+            log.debug("Successfully processed and acknowledged booking confirmation for booking: {}", event.getBookingId());
         } catch (Exception e) {
             log.error("Error processing booking confirmation notification for booking: {}", event.getBookingId(), e);
+            // Don't acknowledge on error - message will be retried
+            throw e;
         }
     }
 
     @KafkaListener(topics = "${kafka.topics.booking-cancelled}", groupId = "${spring.kafka.consumer.group-id}")
-    public void handleBookingCancellation(NotificationRequest request) {
+    public void handleBookingCancellation(NotificationRequest request, Acknowledgment acknowledgment) {
         if (request == null) {
             log.warn("Received null booking cancellation request, ignoring");
+            acknowledgment.acknowledge();
             return;
         }
 
         log.info("Received booking cancellation event for user: {}", request.getUserId());
         try {
             notificationService.createNotification(request);
+            acknowledgment.acknowledge();
+            log.debug("Successfully processed and acknowledged booking cancellation for user: {}", request.getUserId());
         } catch (Exception e) {
             log.error("Error processing booking cancellation notification", e);
+            // Don't acknowledge on error - message will be retried
+            throw e;
         }
     }
 
     @KafkaListener(topics = "${kafka.topics.payment-completed}", groupId = "${spring.kafka.consumer.group-id}")
-    public void handlePaymentCompletion(NotificationRequest request) {
+    public void handlePaymentCompletion(NotificationRequest request, Acknowledgment acknowledgment) {
         if (request == null) {
             log.warn("Received null payment completion request, ignoring");
+            acknowledgment.acknowledge();
             return;
         }
 
         log.info("Received payment completion event for user: {}", request.getUserId());
         try {
             notificationService.createNotification(request);
+            acknowledgment.acknowledge();
+            log.debug("Successfully processed and acknowledged payment completion for user: {}", request.getUserId());
         } catch (Exception e) {
             log.error("Error processing payment completion notification", e);
+            // Don't acknowledge on error - message will be retried
+            throw e;
         }
     }
     

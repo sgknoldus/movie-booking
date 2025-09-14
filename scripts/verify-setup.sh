@@ -29,9 +29,22 @@ check_service() {
     fi
 }
 
-# Stop and remove all containers
+# Stop containers and clean Kafka/Zookeeper (to avoid cluster ID issues)
+# but preserve database volumes unless --reset flag is used
 echo "Stopping all existing containers..."
-docker-compose down -v
+docker-compose down
+
+# Always clean Kafka and Zookeeper to avoid cluster ID conflicts
+echo "Cleaning Kafka and Zookeeper data to prevent cluster ID conflicts..."
+docker volume rm movie-booking-system_kafka_data 2>/dev/null || true
+
+# Only remove all volumes if --reset flag is used
+if [ "$1" = "--reset" ]; then
+    echo "Removing all volumes..."
+    docker volume rm movie-booking-system_postgres_data 2>/dev/null || true
+    docker volume rm movie-booking-system_redis_data 2>/dev/null || true
+    docker volume rm movie-booking-system_es_data 2>/dev/null || true
+fi
 
 
 # Start all services
@@ -41,6 +54,21 @@ docker-compose up -d postgres redis elasticsearch zookeeper kafka
 # Wait for services to start
 echo "Waiting 30 seconds for services to initialize..."
 sleep 30
+
+# Setup required databases and topics
+echo -e "\nSetting up databases and topics..."
+
+# Create theatre_service database if it doesn't exist
+docker exec movie-booking-postgres psql -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'theatre_service'" | grep -q 1 || docker exec movie-booking-postgres psql -U postgres -c "CREATE DATABASE theatre_service;"
+
+# Create required Kafka topics if they don't exist
+topics=("booking-confirmed" "booking-cancelled" "payment-completed" "theatre-events")
+for topic in "${topics[@]}"; do
+    if ! docker exec movie-booking-kafka kafka-topics --bootstrap-server localhost:9092 --list | grep -q "^${topic}$"; then
+        echo "Creating topic: $topic"
+        docker exec movie-booking-kafka kafka-topics --bootstrap-server localhost:9092 --create --topic "$topic" --partitions 3 --replication-factor 1
+    fi
+done
 
 echo -e "\nVerifying services:\n"
 
@@ -65,7 +93,7 @@ check_service "Zookeeper" "movie-booking-system-zookeeper" "docker exec \$(docke
 echo ""
 
 # Check Kafka
-check_service "Kafka" "movie-booking-kafka" "docker exec movie-booking-kafka kafka-topics --bootstrap-server localhost:9092 --list" || exit_status=1
+check_service "Kafka" "movie-booking-kafka" "docker exec movie-booking-kafka kafka-topics --bootstrap-server localhost:9092 --list && echo 'Topics created:' && docker exec movie-booking-kafka kafka-topics --bootstrap-server localhost:9092 --list | wc -l" || exit_status=1
 
 echo -e "\n${YELLOW}Container Status:${NC}"
 docker-compose ps

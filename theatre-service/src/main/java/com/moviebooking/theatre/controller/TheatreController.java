@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Theatre Management", description = "APIs for managing theatres")
 @SecurityRequirement(name = "Bearer Authentication")
 public class TheatreController {
-    private TheatreService theatreService;
+    private final TheatreService theatreService;
     
     @PostMapping
     @Operation(summary = "Create a new theatre", description = "Creates a new theatre in the system")

@@ -31,18 +31,20 @@ public class KafkaConsumerConfig {
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        
+
+        // Exactly-once semantics for consumer
+        configProps.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
+        configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
         // Use ErrorHandlingDeserializer to handle serialization exceptions gracefully
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
-        
+
         // Configure the actual deserializers
         configProps.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
         configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
-        
-                 configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "com.moviebooking.common.events.booking");
-        // If you want to allow everything (less secure):
-        // configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+
+        configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "com.moviebooking.common.events.booking");
 
         // Optional: disable type headers and set default type
         configProps.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
@@ -50,7 +52,7 @@ public class KafkaConsumerConfig {
 
         // Optional: type mappings if multiple events
         configProps.put(JsonDeserializer.TYPE_MAPPINGS,
-                "bookingConfirmedEvent:com.moviebooking.common.events.booking.BookingConfirmedEvent");    
+                "bookingConfirmedEvent:com.moviebooking.common.events.booking.BookingConfirmedEvent");
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
     
@@ -58,6 +60,10 @@ public class KafkaConsumerConfig {
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+
+        // Enable exactly-once processing
+        factory.getContainerProperties().setAckMode(org.springframework.kafka.listener.ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+
         return factory;
     }
 }

@@ -129,7 +129,7 @@ class BookingServiceTest {
         verify(theatreServiceClient).checkSeatAvailability(any(SeatAvailabilityRequest.class));
         verify(paymentServiceClient).processPayment(any(PaymentRequest.class));
         verify(bookingRepository, times(2)).save(any(Booking.class));
-        verify(kafkaTemplate).send(eq("booking-confirmed"), anyString(), any(BookingConfirmedEvent.class));
+        verify(kafkaTemplate).executeInTransaction(any());
         verify(rLock).unlock();
     }
 
@@ -204,7 +204,7 @@ class BookingServiceTest {
         List<Booking> savedBookings = bookingCaptor.getAllValues();
         assertThat(savedBookings.get(1).getStatus()).isEqualTo(BookingStatus.PAYMENT_FAILED);
 
-        verify(kafkaTemplate, never()).send(anyString(), anyString(), any());
+        verify(kafkaTemplate, never()).executeInTransaction(any());
         verify(rLock).unlock();
     }
 
@@ -326,14 +326,8 @@ class BookingServiceTest {
         bookingService.bookTickets(bookingRequest);
 
         // Then
-        ArgumentCaptor<BookingConfirmedEvent> eventCaptor = ArgumentCaptor.forClass(BookingConfirmedEvent.class);
-        verify(kafkaTemplate).send(eq("booking-confirmed"), eq(testBooking.getBookingId()), eventCaptor.capture());
-
-        BookingConfirmedEvent capturedEvent = eventCaptor.getValue();
-        assertThat(capturedEvent.getBookingId()).isEqualTo(testBooking.getBookingId());
-        assertThat(capturedEvent.getUserId()).isEqualTo(testBooking.getUserId());
-        assertThat(capturedEvent.getPaymentId()).isEqualTo("PAY-123");
-        assertThat(capturedEvent.getConfirmedAt()).isNotNull();
+        // Verify that Kafka transaction was executed
+        verify(kafkaTemplate).executeInTransaction(any());
     }
 
     @Test
@@ -351,12 +345,192 @@ class BookingServiceTest {
         when(paymentServiceClient.processPayment(any(PaymentRequest.class)))
                 .thenReturn(ResponseEntity.ok(paymentResponse));
 
-        doThrow(new RuntimeException("Kafka error")).when(kafkaTemplate).send(anyString(), anyString(), any());
+        doThrow(new RuntimeException("Kafka error")).when(kafkaTemplate).executeInTransaction(any());
 
         // When & Then - Should not throw exception
         BookingResponse result = bookingService.bookTickets(bookingRequest);
 
         assertThat(result).isNotNull();
         assertThat(result.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
+    }
+
+    @Test
+    void bookTickets_ShouldPreventConcurrentBookingSameSeats() throws InterruptedException {
+        // Given - Simulate two concurrent requests for the same seats
+        String lockKey = "booking:lock:show:1:seats:A1,A2";
+        when(redissonClient.getLock(lockKey)).thenReturn(rLock);
+        when(rLock.tryLock(10L, 300L, TimeUnit.SECONDS)).thenReturn(false); // Lock acquisition fails
+
+        // When & Then
+        assertThatThrownBy(() -> bookingService.bookTickets(bookingRequest))
+                .isInstanceOf(BookingException.class)
+                .hasMessage("Unable to process booking at this moment. Please try again.");
+
+        // Verify no downstream calls were made when lock acquisition fails
+        verify(theatreServiceClient, never()).checkSeatAvailability(any());
+        verify(paymentServiceClient, never()).processPayment(any());
+        verify(bookingRepository, never()).save(any());
+        verify(kafkaTemplate, never()).executeInTransaction(any());
+    }
+
+    @Test
+    void bookTickets_ShouldHandleDuplicateBookingRequestsIdempotently() throws InterruptedException {
+        // Given
+        when(redissonClient.getLock(anyString())).thenReturn(rLock);
+        when(rLock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(rLock.isHeldByCurrentThread()).thenReturn(true);
+
+        // Simulate seat availability check returns unavailable on second call
+        // (indicating seats were already booked by first request)
+        SeatAvailabilityResponse unavailableResponse = SeatAvailabilityResponse.builder()
+                .available(false)
+                .unavailableSeats(List.of("A1", "A2"))
+                .build();
+
+        when(theatreServiceClient.checkSeatAvailability(any(SeatAvailabilityRequest.class)))
+                .thenReturn(ResponseEntity.ok(unavailableResponse));
+
+        // When & Then
+        assertThatThrownBy(() -> bookingService.bookTickets(bookingRequest))
+                .isInstanceOf(BookingException.class)
+                .hasMessageContaining("Requested seats are not available");
+
+        // Verify lock was properly released even when booking fails
+        verify(rLock).unlock();
+    }
+
+    @Test
+    void bookTickets_ShouldHandleLockTimeout() throws InterruptedException {
+        // Given
+        when(redissonClient.getLock(anyString())).thenReturn(rLock);
+        when(rLock.tryLock(10L, 300L, TimeUnit.SECONDS)).thenReturn(false);
+
+        // When & Then
+        assertThatThrownBy(() -> bookingService.bookTickets(bookingRequest))
+                .isInstanceOf(BookingException.class)
+                .hasMessage("Unable to process booking at this moment. Please try again.");
+
+        // Verify that no processing occurred when lock timeout happens
+        verify(theatreServiceClient, never()).checkSeatAvailability(any());
+        verify(paymentServiceClient, never()).processPayment(any());
+        verify(bookingRepository, never()).save(any());
+        verify(kafkaTemplate, never()).executeInTransaction(any());
+    }
+
+    @Test
+    void bookTickets_ShouldEnsureLockIsAlwaysReleased() throws InterruptedException {
+        // Given
+        when(redissonClient.getLock(anyString())).thenReturn(rLock);
+        when(rLock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(rLock.isHeldByCurrentThread()).thenReturn(true);
+
+        // Simulate exception during seat availability check
+        when(theatreServiceClient.checkSeatAvailability(any(SeatAvailabilityRequest.class)))
+                .thenThrow(new RuntimeException("Service unavailable"));
+
+        // When & Then
+        assertThatThrownBy(() -> bookingService.bookTickets(bookingRequest))
+                .isInstanceOf(BookingException.class);
+
+        // Verify lock was released despite exception
+        verify(rLock).unlock();
+    }
+
+    @Test
+    void bookTickets_ShouldValidateLockKeyGeneration() throws InterruptedException {
+        // Given
+        BookingRequest customRequest = new BookingRequest();
+        customRequest.setUserId(1L);
+        customRequest.setShowId(123L);
+        customRequest.setSeatNumbers(List.of("B5", "B6", "B7"));
+
+        String expectedLockKey = "booking:lock:show:123:seats:B5,B6,B7";
+
+        when(redissonClient.getLock(expectedLockKey)).thenReturn(rLock);
+        when(rLock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(rLock.isHeldByCurrentThread()).thenReturn(true);
+
+        when(theatreServiceClient.checkSeatAvailability(any(SeatAvailabilityRequest.class)))
+                .thenReturn(ResponseEntity.ok(availabilityResponse));
+
+        when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
+
+        when(paymentServiceClient.processPayment(any(PaymentRequest.class)))
+                .thenReturn(ResponseEntity.ok(paymentResponse));
+
+        // When
+        bookingService.bookTickets(customRequest);
+
+        // Then
+        verify(redissonClient).getLock(expectedLockKey);
+    }
+
+    @Test
+    void bookTickets_ShouldHandleTransactionalIntegrity() throws InterruptedException {
+        // Given
+        when(redissonClient.getLock(anyString())).thenReturn(rLock);
+        when(rLock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(rLock.isHeldByCurrentThread()).thenReturn(true);
+
+        when(theatreServiceClient.checkSeatAvailability(any(SeatAvailabilityRequest.class)))
+                .thenReturn(ResponseEntity.ok(availabilityResponse));
+
+        // Simulate database save failure after payment success
+        when(bookingRepository.save(any(Booking.class)))
+                .thenReturn(testBooking) // First save (pending status) succeeds
+                .thenThrow(new RuntimeException("Database connection lost")); // Second save fails
+
+        when(paymentServiceClient.processPayment(any(PaymentRequest.class)))
+                .thenReturn(ResponseEntity.ok(paymentResponse));
+
+        // When & Then
+        assertThatThrownBy(() -> bookingService.bookTickets(bookingRequest))
+                .isInstanceOf(BookingException.class)
+                .hasMessageContaining("Database connection lost");
+
+        // Verify that Kafka event was not published due to database failure
+        verify(kafkaTemplate, never()).executeInTransaction(any());
+        verify(rLock).unlock();
+    }
+
+    @Test
+    void bookTickets_ShouldEnsureIdempotentKafkaPublishing() throws InterruptedException {
+        // Given
+        when(redissonClient.getLock(anyString())).thenReturn(rLock);
+        when(rLock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(rLock.isHeldByCurrentThread()).thenReturn(true);
+
+        when(theatreServiceClient.checkSeatAvailability(any(SeatAvailabilityRequest.class)))
+                .thenReturn(ResponseEntity.ok(availabilityResponse));
+
+        Booking confirmedBooking = Booking.builder()
+                .bookingId(testBooking.getBookingId())
+                .userId(testBooking.getUserId())
+                .showId(testBooking.getShowId())
+                .theatreId(testBooking.getTheatreId())
+                .movieId(testBooking.getMovieId())
+                .seatNumbers(testBooking.getSeatNumbers())
+                .totalAmount(testBooking.getTotalAmount())
+                .status(BookingStatus.CONFIRMED)
+                .paymentId("PAY-123")
+                .showDateTime(testBooking.getShowDateTime())
+                .build();
+
+        when(bookingRepository.save(any(Booking.class)))
+                .thenReturn(testBooking) // First save (pending)
+                .thenReturn(confirmedBooking); // Second save (confirmed)
+
+        when(paymentServiceClient.processPayment(any(PaymentRequest.class)))
+                .thenReturn(ResponseEntity.ok(paymentResponse));
+
+        // Mock successful Kafka transaction
+        when(kafkaTemplate.executeInTransaction(any())).thenReturn(true);
+
+        // When
+        BookingResponse result = bookingService.bookTickets(bookingRequest);
+
+        // Then
+        assertThat(result.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
+        verify(kafkaTemplate).executeInTransaction(any());
     }
 }

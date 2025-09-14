@@ -156,8 +156,13 @@ public class BookingService {
                     .confirmedAt(LocalDateTime.now())
                     .build();
 
-            kafkaTemplate.send("booking-confirmed", booking.getBookingId(), event);
-            log.info("Published booking confirmed event for booking: {}", booking.getBookingId());
+            // Use Kafka transactions for exactly-once semantics
+            kafkaTemplate.executeInTransaction(operations -> {
+                operations.send("booking-confirmed", booking.getBookingId(), event);
+                log.info("Published booking confirmed event for booking: {}", booking.getBookingId());
+                return true;
+            });
+
         } catch (Exception e) {
             log.error("Error publishing booking confirmed event for booking: {}", booking.getBookingId(), e);
             // Don't throw exception here as booking is already confirmed
