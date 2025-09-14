@@ -4,9 +4,85 @@ A robust, scalable movie ticket booking platform built using Spring Boot microse
 
 ## System Architecture
 
-
-
 ![Architecture Diagram](arc.png)
+
+### Architecture Flow Across Microservices
+
+The Movie Booking System follows a distributed microservices architecture with the following request flow:
+
+#### 1. User Registration & Authentication Flow
+```
+Client → API Gateway → User Service → PostgreSQL (user_db)
+                   ↓
+               JWT Token Generation
+                   ↓
+            Response to Client
+```
+
+#### 2. Movie Search & Discovery Flow
+```
+Client → API Gateway → Search Service → Elasticsearch
+                           ↑
+                   Kafka Event Listener
+                           ↑
+              Theatre Service (publishes events)
+```
+
+#### 3. Theatre & Show Management Flow
+```
+Admin/System → API Gateway → Theatre Service → PostgreSQL (theatre_db)
+                                    ↓
+                            Kafka Producer (publishes events)
+                                    ↓
+                    Search Service (updates Elasticsearch index)
+```
+
+#### 4. Booking Process Flow
+```
+Client → API Gateway → Booking Service → PostgreSQL (booking_service)
+                           ↓
+                    Payment Service → PostgreSQL (payment_service)
+                           ↓
+                    Kafka Producer (publishes booking events)
+                           ↓
+              ┌─ Ticket Service (generates tickets)
+              └─ Notification Service (sends confirmations)
+```
+
+#### 5. Complete Booking Transaction Flow
+```
+1. User selects seats → Booking Service (seat locking)
+2. Payment processing → Payment Service
+3. Booking confirmation → Kafka Event (BookingConfirmedEvent)
+4. Parallel processing:
+   ├─ Ticket Service → Generates QR code tickets
+   ├─ Notification Service → Sends email confirmation
+   └─ Search Service → Updates seat availability
+```
+
+#### 6. Service Communication Patterns
+
+**Synchronous Communication (REST APIs):**
+- Client ↔ API Gateway ↔ Individual Services
+- Inter-service calls for immediate responses
+
+**Asynchronous Communication (Kafka Events):**
+- Theatre Service → Search Service (theatre/show updates)
+- Booking Service → Notification Service (booking confirmations)
+- Booking Service → Ticket Service (ticket generation)
+- Payment Service → Notification Service (payment confirmations)
+
+#### 7. Data Consistency & Transaction Management
+
+**Database per Service Pattern:**
+- Each microservice maintains its own database
+- Eventual consistency through event-driven updates
+- Transactional outbox pattern for reliable event publishing
+
+**Cross-Service Data Synchronization:**
+- Kafka events ensure data consistency across services
+- Search Service maintains denormalized data for fast queries
+- Compensation patterns for distributed transaction failures
 
 
 
@@ -179,6 +255,122 @@ Quick Start:
 - **Apache Kafka**: 9092 (Event streaming)
 - **Zookeeper**: 2181 (Kafka coordination)
 - **Kafka UI**: 8090 (Kafka management interface)
+
+## Kafka Event Driven Architecture
+
+The system leverages Apache Kafka for asynchronous, event-driven communication between microservices, ensuring loose coupling and scalability.
+
+### Event Flow Architecture
+
+#### Core Kafka Topics
+- **theatre-events**: Theatre, screen, show, and seat availability events
+- **booking-confirmed**: Successful booking confirmation events
+- **booking-cancelled**: Booking cancellation events
+- **payment-completed**: Payment processing completion events
+
+### Event Producers & Consumers
+
+#### Theatre Service (Producer)
+- **Publishes Events:**
+  - City creation/update/deletion → `theatre-events`
+  - Theatre creation/update/deletion → `theatre-events`
+  - Screen creation/update/deletion → `theatre-events`
+  - Show creation/update/deletion → `theatre-events`
+  - Seat availability changes → `theatre-events`
+
+```java
+// Example: Theatre Service publishes events
+@Service
+public class TheatreEventPublisher {
+    @KafkaTransactional
+    public void publishTheatreEvent(String eventType, Object eventData) {
+        kafkaTemplate.send("theatre-events", eventKey, jsonData);
+    }
+}
+```
+
+#### Search Service (Consumer)
+- **Consumes Events:**
+  - Theatre events → Updates Elasticsearch indices
+  - Show events → Maintains search-optimized show data
+  - Seat availability → Updates show seat counts
+
+```java
+// Example: Search Service consumes theatre events
+@KafkaListener(topics = "theatre-events", groupId = "search-service-group")
+public void handleTheatreEvent(String eventData) {
+    // Process and index in Elasticsearch
+}
+```
+
+#### Booking Service (Producer)
+- **Publishes Events:**
+  - Booking confirmation → `booking-confirmed`
+  - Booking cancellation → `booking-cancelled`
+
+#### Notification Service (Consumer)
+- **Consumes Events:**
+  - Booking confirmations → Sends email notifications
+  - Booking cancellations → Sends cancellation emails
+  - Payment completions → Sends payment confirmations
+
+#### Ticket Service (Consumer)
+- **Consumes Events:**
+  - Booking confirmations → Generates QR code tickets
+  - Updates ticket status based on booking events
+
+### Event Processing Patterns
+
+#### 1. Event Sourcing
+- All domain events are stored in Kafka for audit and replay
+- Event store serves as source of truth for state changes
+- Services can reconstruct state by replaying events
+
+#### 2. SAGA Pattern Implementation
+```
+Booking Process SAGA:
+1. Booking Service → Create Booking (Compensatable)
+2. Payment Service → Process Payment (Compensatable)
+3. Ticket Service → Generate Ticket (Compensatable)
+4. Notification Service → Send Confirmation (Final)
+
+On Failure: Compensation events trigger rollback
+```
+
+#### 3. Eventual Consistency
+- Services maintain local consistency
+- Cross-service consistency achieved through event propagation
+- Compensating actions handle inconsistencies
+
+#### 4. Dead Letter Queue (DLQ)
+- Failed event processing → Retry mechanism
+- Max retries exceeded → Dead letter topic
+- Manual intervention for poison messages
+
+### Kafka Configuration Highlights
+
+#### Producer Configuration (Exactly-Once Semantics)
+```yaml
+spring:
+  kafka:
+    producer:
+      acks: all
+      retries: 3
+      enable-idempotence: true
+      transaction-id-prefix: service-tx-
+```
+
+#### Consumer Configuration (At-Least-Once Delivery)
+```yaml
+spring:
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      group-id: service-group
+      isolation-level: read_committed
+```
+
 
 ## Service Management
 
