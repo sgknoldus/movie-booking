@@ -16,8 +16,13 @@ public class TicketEventListener {
 
     @KafkaListener(topics = "booking-confirmed", groupId = "ticket-service-group")
     public void handleBookingConfirmed(BookingConfirmedEvent event) {
+        if (event == null) {
+            log.warn("Received null booking confirmed event, ignoring");
+            return;
+        }
+
         log.info("Received booking confirmed event for booking: {}", event.getBookingId());
-        
+
         try {
             ticketService.createTicketFromBooking(event);
             log.info("Successfully created ticket for booking: {}", event.getBookingId());

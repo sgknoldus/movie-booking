@@ -16,9 +16,14 @@ public class TheatreEventListener {
 
     @KafkaListener(topics = "booking-confirmed", groupId = "theatre-service-group")
     public void handleBookingConfirmed(BookingConfirmedEvent event) {
-        log.info("Received booking confirmed event for show: {} with seats: {}", 
+        if (event == null) {
+            log.warn("Received null booking confirmed event, ignoring");
+            return;
+        }
+
+        log.info("Received booking confirmed event for show: {} with seats: {}",
                 event.getShowId(), event.getSeatNumbers());
-        
+
         try {
             seatAvailabilityService.markSeatsAsBooked(event.getShowId(), event.getSeatNumbers());
             log.info("Successfully marked seats as booked for booking: {}", event.getBookingId());

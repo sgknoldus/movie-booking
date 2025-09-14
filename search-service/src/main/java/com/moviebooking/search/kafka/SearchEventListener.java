@@ -16,9 +16,14 @@ public class SearchEventListener {
 
     @KafkaListener(topics = "booking-confirmed", groupId = "search-service-group")
     public void handleBookingConfirmed(BookingConfirmedEvent event) {
-        log.info("Received booking confirmed event for show: {} with seats: {}", 
+        if (event == null) {
+            log.warn("Received null booking confirmed event, ignoring");
+            return;
+        }
+
+        log.info("Received booking confirmed event for show: {} with seats: {}",
                 event.getShowId(), event.getSeatNumbers());
-        
+
         try {
             searchIndexService.updateShowSeatAvailability(event.getShowId(), event.getSeatNumbers(), false);
             log.info("Successfully updated search index for booking: {}", event.getBookingId());

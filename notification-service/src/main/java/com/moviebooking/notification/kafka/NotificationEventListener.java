@@ -20,6 +20,11 @@ public class NotificationEventListener {
 
     @KafkaListener(topics = "${kafka.topics.booking-confirmed}", groupId = "${spring.kafka.consumer.group-id}")
     public void handleBookingConfirmation(BookingConfirmedEvent event) {
+        if (event == null) {
+            log.warn("Received null booking confirmation event, ignoring");
+            return;
+        }
+
         log.info("Received booking confirmation event for user: {} and booking: {}", event.getUserId(), event.getBookingId());
         try {
             NotificationRequest request = createNotificationRequestFromBookingEvent(event);
@@ -31,6 +36,11 @@ public class NotificationEventListener {
 
     @KafkaListener(topics = "${kafka.topics.booking-cancelled}", groupId = "${spring.kafka.consumer.group-id}")
     public void handleBookingCancellation(NotificationRequest request) {
+        if (request == null) {
+            log.warn("Received null booking cancellation request, ignoring");
+            return;
+        }
+
         log.info("Received booking cancellation event for user: {}", request.getUserId());
         try {
             notificationService.createNotification(request);
@@ -41,6 +51,11 @@ public class NotificationEventListener {
 
     @KafkaListener(topics = "${kafka.topics.payment-completed}", groupId = "${spring.kafka.consumer.group-id}")
     public void handlePaymentCompletion(NotificationRequest request) {
+        if (request == null) {
+            log.warn("Received null payment completion request, ignoring");
+            return;
+        }
+
         log.info("Received payment completion event for user: {}", request.getUserId());
         try {
             notificationService.createNotification(request);

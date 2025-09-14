@@ -25,7 +25,7 @@ public class PaymentService {
         }
         
         // Dummy implementation - 90% success rate
-        boolean isSuccess = Math.random() < 0.9;
+        boolean isSuccess = shouldPaymentSucceed();
         
         String paymentId = generatePaymentId();
         String status = isSuccess ? "SUCCESS" : "FAILED";
@@ -46,6 +46,10 @@ public class PaymentService {
         return response;
     }
     
+    protected boolean shouldPaymentSucceed() {
+        return Math.random() < 0.9;
+    }
+
     private String generatePaymentId() {
         return "PAY-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8);
     }
