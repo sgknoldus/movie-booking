@@ -112,22 +112,43 @@ public class SearchService {
     
     // Theatre Search Methods
     public List<TheatreDocument> searchTheatres(String query) {
-        if (query == null || query.trim().isEmpty()) {
-            return (List<TheatreDocument>) theatreSearchRepository.findAll();
+        try {
+            if (query == null || query.trim().isEmpty()) {
+                return StreamSupport.stream(theatreSearchRepository.findAll().spliterator(), false)
+                        .collect(Collectors.toList());
+            }
+            return theatreSearchRepository.findByNameContainingIgnoreCase(query);
+        } catch (Exception e) {
+            log.error("Failed to search theatres: {}", e.getMessage(), e);
+            return List.of();
         }
-        return theatreSearchRepository.findByNameContainingIgnoreCase(query);
     }
     
     public List<TheatreDocument> searchTheatresByCity(Long cityId) {
-        return theatreSearchRepository.findByCityId(cityId);
+        try {
+            return theatreSearchRepository.findByCityId(cityId);
+        } catch (Exception e) {
+            log.error("Failed to search theatres by city {}: {}", cityId, e.getMessage(), e);
+            return List.of();
+        }
     }
-    
+
     public List<TheatreDocument> searchTheatresByCityName(String cityName) {
-        return theatreSearchRepository.findByCityNameContainingIgnoreCase(cityName);
+        try {
+            return theatreSearchRepository.findByCityNameContainingIgnoreCase(cityName);
+        } catch (Exception e) {
+            log.error("Failed to search theatres by city name '{}': {}", cityName, e.getMessage(), e);
+            return List.of();
+        }
     }
-    
+
     public List<TheatreDocument> searchTheatresByAddress(String address) {
-        return theatreSearchRepository.findByAddressContainingIgnoreCase(address);
+        try {
+            return theatreSearchRepository.findByAddressContainingIgnoreCase(address);
+        } catch (Exception e) {
+            log.error("Failed to search theatres by address '{}': {}", address, e.getMessage(), e);
+            return List.of();
+        }
     }
     
     public List<TheatreDocument> searchTheatresNearLocation(double latitude, double longitude, String distance) {
@@ -148,43 +169,97 @@ public class SearchService {
     
     // Show Search Methods
     public List<ShowDocument> searchShows(String query) {
-        if (query == null || query.trim().isEmpty()) {
-            return StreamSupport.stream(showSearchRepository.findAll().spliterator(), false)
-                    .collect(Collectors.toList());
+        try {
+            if (query == null || query.trim().isEmpty()) {
+                return StreamSupport.stream(showSearchRepository.findAll().spliterator(), false)
+                        .collect(Collectors.toList());
+            }
+            return showSearchRepository.findByMovieTitleContainingIgnoreCase(query);
+        } catch (Exception e) {
+            log.error("Failed to search shows: {}", e.getMessage(), e);
+            return List.of();
         }
-        return showSearchRepository.findByMovieTitleContainingIgnoreCase(query);
     }
-    
+
     public List<ShowDocument> searchShowsByMovie(Long movieId) {
-        return showSearchRepository.findByMovieId(movieId);
+        try {
+            log.debug("Searching shows for movie ID: {}", movieId);
+            List<ShowDocument> results = showSearchRepository.findByMovieId(movieId);
+            log.debug("Found {} shows for movie ID: {}", results.size(), movieId);
+            return results;
+        } catch (Exception e) {
+            log.error("Failed to search shows by movie {}: {}", movieId, e.getMessage(), e);
+            return List.of();
+        }
     }
-    
+
     public List<ShowDocument> searchShowsByTheatre(Long theatreId) {
-        return showSearchRepository.findByTheatreId(theatreId);
+        try {
+            log.debug("Searching shows for theatre ID: {}", theatreId);
+            List<ShowDocument> results = showSearchRepository.findByTheatreId(theatreId);
+            log.debug("Found {} shows for theatre ID: {}", results.size(), theatreId);
+            return results;
+        } catch (Exception e) {
+            log.error("Failed to search shows by theatre {}: {}", theatreId, e.getMessage(), e);
+            return List.of();
+        }
     }
-    
+
     public List<ShowDocument> searchShowsByCity(Long cityId) {
-        return showSearchRepository.findByCityId(cityId);
+        try {
+            log.debug("Searching shows for city ID: {}", cityId);
+            List<ShowDocument> results = showSearchRepository.findByCityId(cityId);
+            log.debug("Found {} shows for city ID: {}", results.size(), cityId);
+            return results;
+        } catch (Exception e) {
+            log.error("Failed to search shows by city {}: {}", cityId, e.getMessage(), e);
+            return List.of();
+        }
     }
-    
+
     public List<ShowDocument> searchShowsByMovieAndCity(Long movieId, Long cityId) {
-        return showSearchRepository.findByMovieIdAndCityId(movieId, cityId);
+        try {
+            return showSearchRepository.findByMovieIdAndCityId(movieId, cityId);
+        } catch (Exception e) {
+            log.error("Failed to search shows by movie {} and city {}: {}", movieId, cityId, e.getMessage(), e);
+            return List.of();
+        }
     }
-    
+
     public List<ShowDocument> searchShowsByMovieAndCityAfterDateTime(Long movieId, Long cityId, LocalDateTime dateTime) {
-        return showSearchRepository.findByMovieIdAndCityIdAndShowDateTimeAfter(movieId, cityId, dateTime);
+        try {
+            return showSearchRepository.findByMovieIdAndCityIdAndShowDateTimeAfter(movieId, cityId, dateTime);
+        } catch (Exception e) {
+            log.error("Failed to search shows by movie {}, city {} after {}: {}", movieId, cityId, dateTime, e.getMessage(), e);
+            return List.of();
+        }
     }
     
     public List<ShowDocument> searchShowsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
-        return showSearchRepository.findByShowDateTimeBetween(startDate, endDate);
+        try {
+            return showSearchRepository.findByShowDateTimeBetween(startDate, endDate);
+        } catch (Exception e) {
+            log.error("Failed to search shows by date range {} to {}: {}", startDate, endDate, e.getMessage(), e);
+            return List.of();
+        }
     }
-    
+
     public List<ShowDocument> searchShowsByTheatreName(String theatreName) {
-        return showSearchRepository.findByTheatreNameContainingIgnoreCase(theatreName);
+        try {
+            return showSearchRepository.findByTheatreNameContainingIgnoreCase(theatreName);
+        } catch (Exception e) {
+            log.error("Failed to search shows by theatre name '{}': {}", theatreName, e.getMessage(), e);
+            return List.of();
+        }
     }
-    
+
     public List<ShowDocument> searchShowsByCityName(String cityName) {
-        return showSearchRepository.findByCityNameContainingIgnoreCase(cityName);
+        try {
+            return showSearchRepository.findByCityNameContainingIgnoreCase(cityName);
+        } catch (Exception e) {
+            log.error("Failed to search shows by city name '{}': {}", cityName, e.getMessage(), e);
+            return List.of();
+        }
     }
     
     // Advanced Search Methods
@@ -236,6 +311,34 @@ public class SearchService {
         } catch (Exception e) {
             log.error("Elasticsearch health check failed: {}", e.getMessage());
             return false;
+        }
+    }
+
+    // Count methods for debugging
+    public long countTheatres() {
+        try {
+            return theatreSearchRepository.count();
+        } catch (Exception e) {
+            log.error("Failed to count theatres: {}", e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    public long countCities() {
+        try {
+            return citySearchRepository.count();
+        } catch (Exception e) {
+            log.error("Failed to count cities: {}", e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    public long countShows() {
+        try {
+            return showSearchRepository.count();
+        } catch (Exception e) {
+            log.error("Failed to count shows: {}", e.getMessage(), e);
+            return 0;
         }
     }
     

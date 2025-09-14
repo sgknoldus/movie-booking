@@ -37,8 +37,8 @@ public class SearchIndexService {
                 cityDoc.setZipCode(cityData.get("zipCode").asText());
             }
             
-            cityDoc.setCreatedAt(parseDateTime(cityData.get("createdAt").asText()));
-            cityDoc.setUpdatedAt(parseDateTime(cityData.get("updatedAt").asText()));
+            cityDoc.setCreatedAt(safeParseDateTime(cityData, "createdAt"));
+            cityDoc.setUpdatedAt(safeParseDateTime(cityData, "updatedAt"));
             
             citySearchRepository.save(cityDoc);
             log.info("Indexed city: {} with ID: {}", cityDoc.getName(), cityDoc.getId());
@@ -54,31 +54,32 @@ public class SearchIndexService {
             theatreDoc.setId(theatreData.get("id").asText());
             theatreDoc.setName(theatreData.get("name").asText());
             theatreDoc.setAddress(theatreData.get("address").asText());
-            
+
             if (theatreData.has("phoneNumber") && !theatreData.get("phoneNumber").isNull()) {
                 theatreDoc.setPhoneNumber(theatreData.get("phoneNumber").asText());
             }
-            
+
             if (theatreData.has("email") && !theatreData.get("email").isNull()) {
                 theatreDoc.setEmail(theatreData.get("email").asText());
             }
-            
+
             if (theatreData.has("latitude") && !theatreData.get("latitude").isNull() &&
                 theatreData.has("longitude") && !theatreData.get("longitude").isNull()) {
                 double lat = theatreData.get("latitude").asDouble();
                 double lon = theatreData.get("longitude").asDouble();
                 theatreDoc.setLocation(new GeoPoint(lat, lon));
             }
-            
+
             theatreDoc.setCityId(theatreData.get("cityId").asLong());
             theatreDoc.setCityName(theatreData.get("cityName").asText());
-            
-            theatreDoc.setCreatedAt(parseDateTime(theatreData.get("createdAt").asText()));
-            theatreDoc.setUpdatedAt(parseDateTime(theatreData.get("updatedAt").asText()));
-            
+
+            // Handle datetime fields more robustly
+            theatreDoc.setCreatedAt(safeParseDateTime(theatreData, "createdAt"));
+            theatreDoc.setUpdatedAt(safeParseDateTime(theatreData, "updatedAt"));
+
             theatreSearchRepository.save(theatreDoc);
             log.info("Indexed theatre: {} with ID: {}", theatreDoc.getName(), theatreDoc.getId());
-            
+
         } catch (Exception e) {
             log.error("Failed to index theatre: {}", e.getMessage(), e);
         }
@@ -90,8 +91,8 @@ public class SearchIndexService {
             showDoc.setId(showData.get("id").asText());
             showDoc.setMovieId(showData.get("movieId").asLong());
             showDoc.setMovieTitle(showData.get("movieTitle").asText());
-            showDoc.setShowDateTime(parseDateTime(showData.get("showDateTime").asText()));
-            showDoc.setEndDateTime(parseDateTime(showData.get("endDateTime").asText()));
+            showDoc.setShowDateTime(safeParseDateTime(showData, "showDateTime"));
+            showDoc.setEndDateTime(safeParseDateTime(showData, "endDateTime"));
             showDoc.setPrice(new BigDecimal(showData.get("price").asText()));
             showDoc.setAvailableSeats(showData.get("availableSeats").asInt());
             showDoc.setStatus(showData.get("status").asText());
@@ -105,8 +106,8 @@ public class SearchIndexService {
             showDoc.setCityId(showData.get("cityId").asLong());
             showDoc.setCityName(showData.get("cityName").asText());
             
-            showDoc.setCreatedAt(parseDateTime(showData.get("createdAt").asText()));
-            showDoc.setUpdatedAt(parseDateTime(showData.get("updatedAt").asText()));
+            showDoc.setCreatedAt(safeParseDateTime(showData, "createdAt"));
+            showDoc.setUpdatedAt(safeParseDateTime(showData, "updatedAt"));
             
             showSearchRepository.save(showDoc);
             log.info("Indexed show: {} with ID: {}", showDoc.getMovieTitle(), showDoc.getId());
@@ -181,12 +182,48 @@ public class SearchIndexService {
         // Implementation would depend on how you want to handle full reindexing
     }
     
-    private LocalDateTime parseDateTime(String dateTimeStr) {
-        if (dateTimeStr == null || dateTimeStr.trim().isEmpty()) {
-            log.warn("Null or empty datetime string, using current time");
+    private LocalDateTime safeParseDateTime(JsonNode data, String fieldName) {
+        if (!data.has(fieldName) || data.get(fieldName).isNull()) {
+            log.debug("Missing or null datetime field '{}', using current time", fieldName);
             return LocalDateTime.now();
         }
-        
+
+        // Handle both string and array representations from Jackson
+        JsonNode fieldNode = data.get(fieldName);
+        String dateTimeStr = null;
+
+        if (fieldNode.isTextual()) {
+            dateTimeStr = fieldNode.asText();
+        } else if (fieldNode.isArray() && fieldNode.size() >= 3) {
+            // Handle LocalDateTime serialized as array [year, month, day, hour, minute, second, nano]
+            try {
+                int year = fieldNode.get(0).asInt();
+                int month = fieldNode.get(1).asInt();
+                int day = fieldNode.get(2).asInt();
+                int hour = fieldNode.size() > 3 ? fieldNode.get(3).asInt() : 0;
+                int minute = fieldNode.size() > 4 ? fieldNode.get(4).asInt() : 0;
+                int second = fieldNode.size() > 5 ? fieldNode.get(5).asInt() : 0;
+                int nano = fieldNode.size() > 6 ? fieldNode.get(6).asInt() : 0;
+
+                return LocalDateTime.of(year, month, day, hour, minute, second, nano);
+            } catch (Exception e) {
+                log.warn("Failed to parse datetime array for field '{}': {}, using current time", fieldName, fieldNode, e);
+                return LocalDateTime.now();
+            }
+        } else {
+            log.warn("Unexpected datetime format for field '{}': {}, using current time", fieldName, fieldNode);
+            return LocalDateTime.now();
+        }
+
+        return parseDateTime(dateTimeStr);
+    }
+
+    private LocalDateTime parseDateTime(String dateTimeStr) {
+        if (dateTimeStr == null || dateTimeStr.trim().isEmpty()) {
+            log.debug("Null or empty datetime string, using current time");
+            return LocalDateTime.now();
+        }
+
         try {
             // Try parsing as full ISO datetime first (e.g., "2025-09-11T14:30:00")
             return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
@@ -199,7 +236,7 @@ public class SearchIndexService {
                     // Try parsing with different datetime patterns
                     return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                 } catch (Exception e3) {
-                    log.warn("Failed to parse datetime '{}' with all attempted formats, using current time. Errors: ISO_LOCAL_DATE_TIME={}, ISO_DATE_with_midnight={}, yyyy-MM-dd_HH:mm:ss={}", 
+                    log.warn("Failed to parse datetime '{}' with all attempted formats, using current time. Errors: ISO_LOCAL_DATE_TIME={}, ISO_DATE_with_midnight={}, yyyy-MM-dd_HH:mm:ss={}",
                         dateTimeStr, e1.getMessage(), e2.getMessage(), e3.getMessage());
                     return LocalDateTime.now();
                 }

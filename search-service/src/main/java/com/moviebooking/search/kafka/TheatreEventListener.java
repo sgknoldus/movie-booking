@@ -88,9 +88,17 @@ public class TheatreEventListener {
     
     private void handleCityEvent(String eventType, JsonNode eventData, String topic, int partition, long offset, String key) {
         try {
-            log.debug("Handling city event: eventType={}, cityId={}, topic={}, key={}", 
-                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
-                
+            String cityId = eventData.has("id") ? eventData.get("id").asText() : "unknown";
+            log.debug("Handling city event: eventType={}, cityId={}, topic={}, key={}",
+                eventType, cityId, topic, key);
+
+            // Validate required fields for city events
+            if (!validateCityEventData(eventData, eventType)) {
+                log.error("Invalid city event data: eventType={}, cityId={}, topic={}, key={}, missingFields=true",
+                    eventType, cityId, topic, key);
+                return;
+            }
+
             switch (eventType) {
                 case "UPSERT":
                 case "CREATED":
@@ -100,7 +108,6 @@ public class TheatreEventListener {
                         eventData.has("id") ? eventData.get("id").asText() : "unknown", eventType, topic, key);
                     break;
                 case "DELETED":
-                    String cityId = eventData.get("id").asText();
                     searchIndexService.deleteCity(cityId);
                     log.info("Successfully deleted city from index: id={}, topic={}, key={}", cityId, topic, key);
                     break;
@@ -117,29 +124,36 @@ public class TheatreEventListener {
     
     private void handleTheatreEvent(String eventType, JsonNode eventData, String topic, int partition, long offset, String key) {
         try {
-            log.debug("Handling theatre event: eventType={}, theatreId={}, topic={}, key={}", 
-                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
-                
+            String theatreId = eventData.has("id") ? eventData.get("id").asText() : "unknown";
+            log.debug("Handling theatre event: eventType={}, theatreId={}, topic={}, key={}",
+                eventType, theatreId, topic, key);
+
+            // Validate required fields for theatre events
+            if (!validateTheatreEventData(eventData, eventType)) {
+                log.error("Invalid theatre event data: eventType={}, theatreId={}, topic={}, key={}, missingFields=true",
+                    eventType, theatreId, topic, key);
+                return;
+            }
+
             switch (eventType) {
                 case "UPSERT":
                 case "CREATED":
                 case "UPDATED":
                     searchIndexService.indexTheatre(eventData);
-                    log.info("Successfully indexed theatre: id={}, eventType={}, topic={}, key={}", 
-                        eventData.has("id") ? eventData.get("id").asText() : "unknown", eventType, topic, key);
+                    log.info("Successfully indexed theatre: id={}, eventType={}, topic={}, key={}",
+                        theatreId, eventType, topic, key);
                     break;
                 case "DELETED":
-                    String theatreId = eventData.get("id").asText();
                     searchIndexService.deleteTheatre(theatreId);
                     log.info("Successfully deleted theatre from index: id={}, topic={}, key={}", theatreId, topic, key);
                     break;
                 default:
-                    log.warn("Unknown theatre event type: {} for theatre: id={}, topic={}, key={}", 
-                        eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
+                    log.warn("Unknown theatre event type: {} for theatre: id={}, topic={}, key={}",
+                        eventType, theatreId, topic, key);
             }
         } catch (Exception e) {
-            log.error("Failed to handle theatre event: eventType={}, theatreId={}, topic={}, partition={}, offset={}, key={}, error={}, errorType={}", 
-                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", 
+            log.error("Failed to handle theatre event: eventType={}, theatreId={}, topic={}, partition={}, offset={}, key={}, error={}, errorType={}",
+                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown",
                 topic, partition, offset, key, e.getMessage(), e.getClass().getSimpleName(), e);
         }
     }
@@ -161,9 +175,17 @@ public class TheatreEventListener {
     
     private void handleShowEvent(String eventType, JsonNode eventData, String topic, int partition, long offset, String key) {
         try {
-            log.debug("Handling show event: eventType={}, showId={}, topic={}, key={}", 
-                eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
-                
+            String showId = eventData.has("id") ? eventData.get("id").asText() : "unknown";
+            log.debug("Handling show event: eventType={}, showId={}, topic={}, key={}",
+                eventType, showId, topic, key);
+
+            // Validate required fields for show events
+            if (!validateShowEventData(eventData, eventType)) {
+                log.error("Invalid show event data: eventType={}, showId={}, topic={}, key={}, missingFields=true",
+                    eventType, showId, topic, key);
+                return;
+            }
+
             switch (eventType) {
                 case "UPSERT":
                 case "CREATED":
@@ -173,7 +195,6 @@ public class TheatreEventListener {
                         eventData.has("id") ? eventData.get("id").asText() : "unknown", eventType, topic, key);
                     break;
                 case "DELETED":
-                    String showId = eventData.get("id").asText();
                     searchIndexService.deleteShow(showId);
                     log.info("Successfully deleted show from index: id={}, topic={}, key={}", showId, topic, key);
                     break;
@@ -210,5 +231,70 @@ public class TheatreEventListener {
                 eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", 
                 topic, partition, offset, key, e.getMessage(), e.getClass().getSimpleName(), e);
         }
+    }
+
+    private boolean validateTheatreEventData(JsonNode eventData, String eventType) {
+        // For delete events, we only need ID
+        if ("DELETED".equals(eventType)) {
+            return eventData.has("id") && !eventData.get("id").isNull();
+        }
+
+        // For create/update/upsert events, validate required fields
+        boolean hasId = eventData.has("id") && !eventData.get("id").isNull();
+        boolean hasName = eventData.has("name") && !eventData.get("name").isNull();
+        boolean hasAddress = eventData.has("address") && !eventData.get("address").isNull();
+        boolean hasCityId = eventData.has("cityId") && !eventData.get("cityId").isNull();
+        boolean hasCityName = eventData.has("cityName") && !eventData.get("cityName").isNull();
+
+        if (!hasId || !hasName || !hasAddress || !hasCityId || !hasCityName) {
+            log.warn("Theatre event missing required fields: id={}, name={}, address={}, cityId={}, cityName={}",
+                hasId, hasName, hasAddress, hasCityId, hasCityName);
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean validateCityEventData(JsonNode eventData, String eventType) {
+        // For delete events, we only need ID
+        if ("DELETED".equals(eventType)) {
+            return eventData.has("id") && !eventData.get("id").isNull();
+        }
+
+        // For create/update/upsert events, validate required fields
+        boolean hasId = eventData.has("id") && !eventData.get("id").isNull();
+        boolean hasName = eventData.has("name") && !eventData.get("name").isNull();
+        boolean hasState = eventData.has("state") && !eventData.get("state").isNull();
+        boolean hasCountry = eventData.has("country") && !eventData.get("country").isNull();
+
+        if (!hasId || !hasName || !hasState || !hasCountry) {
+            log.warn("City event missing required fields: id={}, name={}, state={}, country={}",
+                hasId, hasName, hasState, hasCountry);
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean validateShowEventData(JsonNode eventData, String eventType) {
+        // For delete events, we only need ID
+        if ("DELETED".equals(eventType)) {
+            return eventData.has("id") && !eventData.get("id").isNull();
+        }
+
+        // For create/update/upsert events, validate required fields
+        boolean hasId = eventData.has("id") && !eventData.get("id").isNull();
+        boolean hasMovieId = eventData.has("movieId") && !eventData.get("movieId").isNull();
+        boolean hasMovieTitle = eventData.has("movieTitle") && !eventData.get("movieTitle").isNull();
+        boolean hasTheatreId = eventData.has("theatreId") && !eventData.get("theatreId").isNull();
+        boolean hasTheatreName = eventData.has("theatreName") && !eventData.get("theatreName").isNull();
+
+        if (!hasId || !hasMovieId || !hasMovieTitle || !hasTheatreId || !hasTheatreName) {
+            log.warn("Show event missing required fields: id={}, movieId={}, movieTitle={}, theatreId={}, theatreName={}",
+                hasId, hasMovieId, hasMovieTitle, hasTheatreId, hasTheatreName);
+            return false;
+        }
+
+        return true;
     }
 }

@@ -94,9 +94,76 @@ public class ShowSearchController {
             @RequestParam(required = false) String theatreName,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDateTime,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDateTime) {
-        
+
         List<ShowDocument> results = searchService.searchShowsWithFilters(
                 movieTitle, cityName, theatreName, fromDateTime, toDateTime);
         return ResponseEntity.ok(results);
+    }
+
+    @GetMapping("/admin/count")
+    @Operation(summary = "Count shows", description = "Get total count of indexed shows")
+    public ResponseEntity<Long> countShows() {
+        long count = searchService.countShows();
+        return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/admin/debug")
+    @Operation(summary = "Debug info", description = "Get debug information about show indices")
+    public ResponseEntity<String> debugInfo() {
+        StringBuilder debug = new StringBuilder();
+        debug.append("=== Show Search Debug Information ===\n");
+        debug.append("Elasticsearch Health: ").append(searchService.isElasticsearchHealthy()).append("\n");
+        debug.append("Total Shows Count: ").append(searchService.countShows()).append("\n");
+        debug.append("Total Theatres Count: ").append(searchService.countTheatres()).append("\n");
+        debug.append("Total Cities Count: ").append(searchService.countCities()).append("\n");
+
+        // Get first 3 shows for debugging
+        List<ShowDocument> sampleShows = searchService.searchShows(null);
+        debug.append("Sample Shows (first 3):\n");
+        sampleShows.stream().limit(3).forEach(show ->
+            debug.append("  - ID: ").append(show.getId())
+                 .append(", Movie: ").append(show.getMovieTitle())
+                 .append(", Theatre: ").append(show.getTheatreName())
+                 .append(" (ID: ").append(show.getTheatreId()).append(")")
+                 .append(", City: ").append(show.getCityName())
+                 .append("\n")
+        );
+
+        return ResponseEntity.ok(debug.toString());
+    }
+
+    @GetMapping("/admin/by-theatre/{theatreId}/debug")
+    @Operation(summary = "Debug shows by theatre", description = "Debug information for shows by theatre ID")
+    public ResponseEntity<String> debugShowsByTheatre(@PathVariable Long theatreId) {
+        StringBuilder debug = new StringBuilder();
+        debug.append("=== Shows by Theatre Debug Information ===\n");
+        debug.append("Theatre ID: ").append(theatreId).append("\n");
+        debug.append("Total Shows Count: ").append(searchService.countShows()).append("\n");
+
+        List<ShowDocument> shows = searchService.searchShowsByTheatre(theatreId);
+        debug.append("Shows found for Theatre ID ").append(theatreId).append(": ").append(shows.size()).append("\n");
+
+        if (shows.isEmpty()) {
+            debug.append("No shows found. Checking all shows for comparison:\n");
+            List<ShowDocument> allShows = searchService.searchShows(null);
+            debug.append("Total shows in index: ").append(allShows.size()).append("\n");
+
+            allShows.stream().limit(5).forEach(show ->
+                debug.append("  - Show ID: ").append(show.getId())
+                     .append(", Theatre ID: ").append(show.getTheatreId())
+                     .append(", Theatre Name: ").append(show.getTheatreName())
+                     .append(", Movie: ").append(show.getMovieTitle())
+                     .append("\n")
+            );
+        } else {
+            shows.forEach(show ->
+                debug.append("  - Show ID: ").append(show.getId())
+                     .append(", Movie: ").append(show.getMovieTitle())
+                     .append(", DateTime: ").append(show.getShowDateTime())
+                     .append("\n")
+            );
+        }
+
+        return ResponseEntity.ok(debug.toString());
     }
 }
