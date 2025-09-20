@@ -52,6 +52,7 @@ public class SearchIndexService {
         try {
             TheatreDocument theatreDoc = new TheatreDocument();
             theatreDoc.setId(theatreData.get("id").asText());
+            theatreDoc.setTheatreId(theatreData.get("id").asLong());
             theatreDoc.setName(theatreData.get("name").asText());
             theatreDoc.setAddress(theatreData.get("address").asText());
 

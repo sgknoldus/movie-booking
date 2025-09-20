@@ -21,12 +21,19 @@ public class TheatreSearchController {
     @Operation(summary = "Search theatres with filters", description = "Search theatres with optional filters")
     public ResponseEntity<List<TheatreDocument>> searchTheatres(
             @RequestParam(required = false) String query,
+            @RequestParam(required = false) Long theatreId,
             @RequestParam(required = false) Long cityId,
             @RequestParam(required = false) String cityName,
             @RequestParam(required = false) String address,
             @RequestParam(required = false) Double latitude,
             @RequestParam(required = false) Double longitude,
             @RequestParam(defaultValue = "10km") String distance) {
+
+        // Theatre ID search
+        if (theatreId != null) {
+            List<TheatreDocument> results = searchService.searchTheatreById(theatreId);
+            return ResponseEntity.ok(results);
+        }
 
         // Location-based search
         if (latitude != null && longitude != null) {

@@ -82,6 +82,7 @@ class SearchServiceTest {
 
         testTheatre = new TheatreDocument();
         testTheatre.setId("1");
+        testTheatre.setTheatreId(1L);
         testTheatre.setName("PVR Cinemas");
         testTheatre.setAddress("123 Main Street");
         testTheatre.setPhoneNumber("1234567890");
@@ -304,6 +305,23 @@ class SearchServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getCityId()).isEqualTo(1L);
         verify(theatreSearchRepository).findByCityId(cityId);
+    }
+
+    @Test
+    void searchTheatreById_ShouldReturnTheatreWithMatchingId() {
+        // Given
+        Long theatreId = 1L;
+        testTheatre.setTheatreId(theatreId);
+        List<TheatreDocument> theatres = List.of(testTheatre);
+        when(theatreSearchRepository.findByTheatreId(theatreId)).thenReturn(theatres);
+
+        // When
+        List<TheatreDocument> result = searchService.searchTheatreById(theatreId);
+
+        // Then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getTheatreId()).isEqualTo(theatreId);
+        verify(theatreSearchRepository).findByTheatreId(theatreId);
     }
 
     @Test

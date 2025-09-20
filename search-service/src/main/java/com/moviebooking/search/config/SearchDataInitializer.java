@@ -183,6 +183,7 @@ public class SearchDataInitializer implements CommandLineRunner {
                                          String cityName, LocalDateTime now) {
         TheatreDocument theatre = new TheatreDocument();
         theatre.setId(id);
+        theatre.setTheatreId(Long.parseLong(id));
         theatre.setName(name);
         theatre.setAddress(address);
         theatre.setPhoneNumber(phoneNumber);

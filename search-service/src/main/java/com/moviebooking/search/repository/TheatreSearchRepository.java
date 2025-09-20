@@ -13,4 +13,5 @@ public interface TheatreSearchRepository extends ElasticsearchRepository<Theatre
     List<TheatreDocument> findByCityNameContainingIgnoreCase(String cityName);
     List<TheatreDocument> findByAddressContainingIgnoreCase(String address);
     List<TheatreDocument> findByCityIdAndNameContainingIgnoreCase(Long cityId, String name);
+    List<TheatreDocument> findByTheatreId(Long theatreId);
 }

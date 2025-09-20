@@ -7,9 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "theatre-service", path = "/api/theatre")
+@FeignClient(name = "theatre-service", path = "/api/v1")
 public interface TheatreServiceClient {
-    
-    @PostMapping("/seats/check-availability")
+
+    @PostMapping("/seats/availability")
     ResponseEntity<SeatAvailabilityResponse> checkSeatAvailability(@RequestBody SeatAvailabilityRequest request);
 }

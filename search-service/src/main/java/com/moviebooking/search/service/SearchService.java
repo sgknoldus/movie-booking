@@ -133,6 +133,15 @@ public class SearchService {
         }
     }
 
+    public List<TheatreDocument> searchTheatreById(Long theatreId) {
+        try {
+            return theatreSearchRepository.findByTheatreId(theatreId);
+        } catch (Exception e) {
+            log.error("Failed to search theatre by ID {}: {}", theatreId, e.getMessage(), e);
+            return List.of();
+        }
+    }
+
     public List<TheatreDocument> searchTheatresByCityName(String cityName) {
         try {
             return theatreSearchRepository.findByCityNameContainingIgnoreCase(cityName);

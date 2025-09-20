@@ -19,7 +19,10 @@ import java.time.LocalDateTime;
 public class TheatreDocument {
     @Id
     private String id;
-    
+
+    @Field(type = FieldType.Long)
+    private Long theatreId;
+
     @Field(type = FieldType.Text, analyzer = "standard")
     private String name;
     
