@@ -1,5 +1,8 @@
 package com.moviebooking.theatre.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moviebooking.theatre.model.OutboxEvent;
 import com.moviebooking.theatre.repository.OutboxEventRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -22,6 +27,7 @@ public class OutboxEventPublisher {
     private final OutboxEventRepository outboxEventRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final OutboxEventService outboxEventService;
+    private final ObjectMapper objectMapper;
     
     @Value("${app.kafka.topics.theatre-events:theatre-events}")
     private String theatreEventsTopic;
@@ -48,16 +54,19 @@ public class OutboxEventPublisher {
         }
     }
     
-    private void publishEventToKafka(OutboxEvent event) {
+    private void publishEventToKafka(OutboxEvent event) throws JsonProcessingException {
         String key = event.getAggregateType() + "-" + event.getAggregateId();
 
         log.debug("Sending Kafka message: topic={}, key={}, eventId={}", theatreEventsTopic, key, event.getId());
 
         try {
+            // Create complete event payload with metadata
+            String eventPayload = createEventPayload(event);
+
             // Use Kafka transactions for exactly-once semantics
             kafkaTemplate.executeInTransaction(operations -> {
                 CompletableFuture<SendResult<String, String>> future =
-                    operations.send(theatreEventsTopic, key, event.getEventData());
+                    operations.send(theatreEventsTopic, key, eventPayload);
 
                 future.whenComplete((result, ex) -> {
                     if (ex == null) {
@@ -81,6 +90,21 @@ public class OutboxEventPublisher {
             outboxEventService.markEventAsFailed(event.getId());
             throw e;
         }
+    }
+
+    private String createEventPayload(OutboxEvent event) throws JsonProcessingException {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("eventType", event.getEventType());
+        payload.put("aggregateType", event.getAggregateType());
+        payload.put("aggregateId", event.getAggregateId());
+        payload.put("eventId", event.getId());
+        payload.put("timestamp", event.getCreatedAt());
+
+        // Parse and include the actual event data
+        Map<String, Object> eventData = objectMapper.readValue(event.getEventData(), new TypeReference<Map<String, Object>>() {});
+        payload.put("data", eventData);
+
+        return objectMapper.writeValueAsString(payload);
     }
     
     @Scheduled(fixedDelay = 300000) // Run every 5 minutes

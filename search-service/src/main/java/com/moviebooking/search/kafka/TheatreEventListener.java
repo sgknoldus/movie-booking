@@ -39,20 +39,23 @@ public class TheatreEventListener {
             }
             
             JsonNode eventJson = objectMapper.readTree(eventData);
-            String aggregateType = extractAggregateType(key);
-            String eventType = determineEventType(eventJson);
+            String aggregateType = extractAggregateType(eventJson, key);
+            String eventType = extractEventType(eventJson);
             
             log.debug("Processing event: aggregateType={}, eventType={}, topic={}, key={}", 
                 aggregateType, eventType, topic, key);
             
+            // Extract the actual event data from the payload
+            JsonNode actualEventData = eventJson.has("data") ? eventJson.get("data") : eventJson;
+
             switch (aggregateType) {
-                case "City" -> handleCityEvent(eventType, eventJson, topic, partition, offset, key);
-                case "Theatre" -> handleTheatreEvent(eventType, eventJson, topic, partition, offset, key);
-                case "Screen" -> handleScreenEvent(eventType, eventJson, topic, partition, offset, key);
-                case "Show" -> handleShowEvent(eventType, eventJson, topic, partition, offset, key);
-                case "SeatAvailability" -> handleSeatEvent(eventType, eventJson, topic, partition, offset, key);
+                case "City" -> handleCityEvent(eventType, actualEventData, topic, partition, offset, key);
+                case "Theatre" -> handleTheatreEvent(eventType, actualEventData, topic, partition, offset, key);
+                case "Screen" -> handleScreenEvent(eventType, actualEventData, topic, partition, offset, key);
+                case "Show" -> handleShowEvent(eventType, actualEventData, topic, partition, offset, key);
+                case "SeatAvailability" -> handleSeatEvent(eventType, actualEventData, topic, partition, offset, key);
                 default -> {
-                    log.warn("Unknown aggregate type: {} for event: topic={}, partition={}, offset={}, key={}", 
+                    log.warn("Unknown aggregate type: {} for event: topic={}, partition={}, offset={}, key={}",
                         aggregateType, topic, partition, offset, key);
                 }
             }
@@ -70,17 +73,28 @@ public class TheatreEventListener {
         }
     }
     
-    private String extractAggregateType(String key) {
+    private String extractAggregateType(JsonNode eventJson, String key) {
+        // First try to get aggregate type from the event payload
+        if (eventJson.has("aggregateType")) {
+            return eventJson.get("aggregateType").asText();
+        }
+
+        // Fallback to extracting from key
         if (key != null && key.contains("-")) {
             return key.split("-")[0];
         }
         return "Unknown";
     }
-    
-    private String determineEventType(JsonNode eventJson) {
-        // This is a simplified approach. In a real system, you might have an eventType field
-        // or use different topics for different event types
-        if (eventJson.has("id") && eventJson.has("name")) {
+
+    private String extractEventType(JsonNode eventJson) {
+        // Extract event type from the payload
+        if (eventJson.has("eventType")) {
+            return eventJson.get("eventType").asText();
+        }
+
+        // Fallback logic for backward compatibility
+        JsonNode dataNode = eventJson.has("data") ? eventJson.get("data") : eventJson;
+        if (dataNode.has("id") && dataNode.has("name")) {
             return "UPSERT";
         }
         return "UNKNOWN";
@@ -103,16 +117,19 @@ public class TheatreEventListener {
                 case "UPSERT":
                 case "CREATED":
                 case "UPDATED":
+                case "CITY_CREATED":
+                case "CITY_UPDATED":
                     searchIndexService.indexCity(eventData);
-                    log.info("Successfully indexed city: id={}, eventType={}, topic={}, key={}", 
+                    log.info("Successfully indexed city: id={}, eventType={}, topic={}, key={}",
                         eventData.has("id") ? eventData.get("id").asText() : "unknown", eventType, topic, key);
                     break;
                 case "DELETED":
+                case "CITY_DELETED":
                     searchIndexService.deleteCity(cityId);
                     log.info("Successfully deleted city from index: id={}, topic={}, key={}", cityId, topic, key);
                     break;
                 default:
-                    log.warn("Unknown city event type: {} for city: id={}, topic={}, key={}", 
+                    log.warn("Unknown city event type: {} for city: id={}, topic={}, key={}",
                         eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
             }
         } catch (Exception e) {
@@ -139,11 +156,14 @@ public class TheatreEventListener {
                 case "UPSERT":
                 case "CREATED":
                 case "UPDATED":
+                case "THEATRE_CREATED":
+                case "THEATRE_UPDATED":
                     searchIndexService.indexTheatre(eventData);
                     log.info("Successfully indexed theatre: id={}, eventType={}, topic={}, key={}",
                         theatreId, eventType, topic, key);
                     break;
                 case "DELETED":
+                case "THEATRE_DELETED":
                     searchIndexService.deleteTheatre(theatreId);
                     log.info("Successfully deleted theatre from index: id={}, topic={}, key={}", theatreId, topic, key);
                     break;
@@ -190,16 +210,19 @@ public class TheatreEventListener {
                 case "UPSERT":
                 case "CREATED":
                 case "UPDATED":
+                case "SHOW_CREATED":
+                case "SHOW_UPDATED":
                     searchIndexService.indexShow(eventData);
-                    log.info("Successfully indexed show: id={}, eventType={}, topic={}, key={}", 
+                    log.info("Successfully indexed show: id={}, eventType={}, topic={}, key={}",
                         eventData.has("id") ? eventData.get("id").asText() : "unknown", eventType, topic, key);
                     break;
                 case "DELETED":
+                case "SHOW_DELETED":
                     searchIndexService.deleteShow(showId);
                     log.info("Successfully deleted show from index: id={}, topic={}, key={}", showId, topic, key);
                     break;
                 default:
-                    log.warn("Unknown show event type: {} for show: id={}, topic={}, key={}", 
+                    log.warn("Unknown show event type: {} for show: id={}, topic={}, key={}",
                         eventType, eventData.has("id") ? eventData.get("id").asText() : "unknown", topic, key);
             }
         } catch (Exception e) {

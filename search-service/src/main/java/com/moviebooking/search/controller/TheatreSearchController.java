@@ -18,8 +18,41 @@ public class TheatreSearchController {
     private final SearchService searchService;
     
     @GetMapping
-    @Operation(summary = "Search theatres", description = "Search theatres by name")
-    public ResponseEntity<List<TheatreDocument>> searchTheatres(@RequestParam(required = false) String query) {
+    @Operation(summary = "Search theatres with filters", description = "Search theatres with optional filters")
+    public ResponseEntity<List<TheatreDocument>> searchTheatres(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) Long cityId,
+            @RequestParam(required = false) String cityName,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude,
+            @RequestParam(defaultValue = "10km") String distance) {
+
+        // Location-based search
+        if (latitude != null && longitude != null) {
+            List<TheatreDocument> results = searchService.searchTheatresNearLocation(latitude, longitude, distance);
+            return ResponseEntity.ok(results);
+        }
+
+        // Address-based search
+        if (address != null) {
+            List<TheatreDocument> results = searchService.searchTheatresByAddress(address);
+            return ResponseEntity.ok(results);
+        }
+
+        // City name search
+        if (cityName != null) {
+            List<TheatreDocument> results = searchService.searchTheatresByCityName(cityName);
+            return ResponseEntity.ok(results);
+        }
+
+        // City ID search
+        if (cityId != null) {
+            List<TheatreDocument> results = searchService.searchTheatresByCity(cityId);
+            return ResponseEntity.ok(results);
+        }
+
+        // Default: search by query or all
         List<TheatreDocument> results = searchService.searchTheatres(query);
         return ResponseEntity.ok(results);
     }
@@ -59,36 +92,5 @@ public class TheatreSearchController {
         );
 
         return ResponseEntity.ok(debug.toString());
-    }
-
-    @GetMapping("/by-city/{cityId}")
-    @Operation(summary = "Search theatres by city", description = "Find theatres in a specific city")
-    public ResponseEntity<List<TheatreDocument>> searchTheatresByCity(@PathVariable Long cityId) {
-        List<TheatreDocument> results = searchService.searchTheatresByCity(cityId);
-        return ResponseEntity.ok(results);
-    }
-    
-    @GetMapping("/by-city-name")
-    @Operation(summary = "Search theatres by city name", description = "Find theatres by city name")
-    public ResponseEntity<List<TheatreDocument>> searchTheatresByCityName(@RequestParam String cityName) {
-        List<TheatreDocument> results = searchService.searchTheatresByCityName(cityName);
-        return ResponseEntity.ok(results);
-    }
-    
-    @GetMapping("/by-address")
-    @Operation(summary = "Search theatres by address", description = "Find theatres by address")
-    public ResponseEntity<List<TheatreDocument>> searchTheatresByAddress(@RequestParam String address) {
-        List<TheatreDocument> results = searchService.searchTheatresByAddress(address);
-        return ResponseEntity.ok(results);
-    }
-    
-    @GetMapping("/nearby")
-    @Operation(summary = "Search nearby theatres", description = "Find theatres near a location")
-    public ResponseEntity<List<TheatreDocument>> searchTheatresNearLocation(
-            @RequestParam double latitude,
-            @RequestParam double longitude,
-            @RequestParam(defaultValue = "10km") String distance) {
-        List<TheatreDocument> results = searchService.searchTheatresNearLocation(latitude, longitude, distance);
-        return ResponseEntity.ok(results);
     }
 }

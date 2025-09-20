@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/theatre/seats")
+@RequestMapping("/api/v1/seats")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Seat Management", description = "Seat availability management operations")
@@ -19,7 +19,7 @@ public class SeatController {
 
     private final SeatAvailabilityService seatAvailabilityService;
 
-    @PostMapping("/check-availability")
+    @PostMapping("/availability")
     @Operation(summary = "Check seat availability", description = "Check availability of requested seats for a show")
     public ResponseEntity<SeatAvailabilityResponse> checkSeatAvailability(@RequestBody SeatAvailabilityRequest request) {
         log.info("Checking seat availability for show: {} with seats: {}", 

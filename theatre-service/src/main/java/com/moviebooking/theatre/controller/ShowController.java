@@ -37,46 +37,42 @@ public class ShowController {
     }
     
     @GetMapping
-    @Operation(summary = "Get all shows", description = "Retrieves all shows")
-    public ResponseEntity<List<ShowResponse>> getAllShows() {
-        List<ShowResponse> response = showService.getAllShows();
-        return ResponseEntity.ok(response);
-    }
-    
-    @GetMapping("/by-theatre/{theatreId}")
-    @Operation(summary = "Get shows by theatre", description = "Retrieves all shows in a specific theatre")
-    public ResponseEntity<List<ShowResponse>> getShowsByTheatre(@PathVariable Long theatreId) {
-        List<ShowResponse> response = showService.getShowsByTheatre(theatreId);
-        return ResponseEntity.ok(response);
-    }
-    
-    @GetMapping("/by-movie/{movieId}")
-    @Operation(summary = "Get shows by movie", description = "Retrieves all shows for a specific movie")
-    public ResponseEntity<List<ShowResponse>> getShowsByMovie(@PathVariable Long movieId) {
-        List<ShowResponse> response = showService.getShowsByMovie(movieId);
-        return ResponseEntity.ok(response);
-    }
-    
-    @GetMapping("/by-movie-city")
-    @Operation(summary = "Get shows by movie and city", description = "Retrieves shows for a movie in a specific city")
-    public ResponseEntity<List<ShowResponse>> getShowsByMovieAndCity(
-            @RequestParam Long movieId,
-            @RequestParam Long cityId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDateTime) {
-        if (fromDateTime == null) {
-            fromDateTime = LocalDateTime.now();
+    @Operation(summary = "Get shows with filters", description = "Retrieves shows with optional filters")
+    public ResponseEntity<List<ShowResponse>> getShows(
+            @RequestParam(required = false) Long theatreId,
+            @RequestParam(required = false) Long movieId,
+            @RequestParam(required = false) Long cityId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDateTime,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+
+        // Complex filtering for theatre and date range
+        if (theatreId != null && startTime != null && endTime != null) {
+            List<ShowResponse> response = showService.getShowsByTheatreAndDateRange(theatreId, startTime, endTime);
+            return ResponseEntity.ok(response);
         }
-        List<ShowResponse> response = showService.getShowsByMovieAndCity(movieId, cityId, fromDateTime);
-        return ResponseEntity.ok(response);
-    }
-    
-    @GetMapping("/by-theatre-date-range")
-    @Operation(summary = "Get shows by theatre and date range", description = "Retrieves shows for a theatre within date range")
-    public ResponseEntity<List<ShowResponse>> getShowsByTheatreAndDateRange(
-            @RequestParam Long theatreId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
-        List<ShowResponse> response = showService.getShowsByTheatreAndDateRange(theatreId, startTime, endTime);
+
+        // Filter by movie and city with optional date
+        if (movieId != null && cityId != null) {
+            LocalDateTime searchFromDateTime = fromDateTime != null ? fromDateTime : LocalDateTime.now();
+            List<ShowResponse> response = showService.getShowsByMovieAndCity(movieId, cityId, searchFromDateTime);
+            return ResponseEntity.ok(response);
+        }
+
+        // Filter by theatre
+        if (theatreId != null) {
+            List<ShowResponse> response = showService.getShowsByTheatre(theatreId);
+            return ResponseEntity.ok(response);
+        }
+
+        // Filter by movie
+        if (movieId != null) {
+            List<ShowResponse> response = showService.getShowsByMovie(movieId);
+            return ResponseEntity.ok(response);
+        }
+
+        // Default: get all shows
+        List<ShowResponse> response = showService.getAllShows();
         return ResponseEntity.ok(response);
     }
     

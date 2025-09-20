@@ -36,25 +36,25 @@ public class ScreenController {
     }
     
     @GetMapping
-    @Operation(summary = "Get all screens", description = "Retrieves all screens")
-    public ResponseEntity<List<ScreenResponse>> getAllScreens() {
+    @Operation(summary = "Get screens with filters", description = "Retrieves screens with optional filters")
+    public ResponseEntity<List<ScreenResponse>> getScreens(
+            @RequestParam(required = false) Long theatreId,
+            @RequestParam(required = false) Screen.ScreenType screenType) {
+
+        // Filter by theatre and screen type
+        if (theatreId != null && screenType != null) {
+            List<ScreenResponse> response = screenService.getScreensByTheatreAndType(theatreId, screenType);
+            return ResponseEntity.ok(response);
+        }
+
+        // Filter by theatre only
+        if (theatreId != null) {
+            List<ScreenResponse> response = screenService.getScreensByTheatre(theatreId);
+            return ResponseEntity.ok(response);
+        }
+
+        // Default: get all screens
         List<ScreenResponse> response = screenService.getAllScreens();
-        return ResponseEntity.ok(response);
-    }
-    
-    @GetMapping("/by-theatre/{theatreId}")
-    @Operation(summary = "Get screens by theatre", description = "Retrieves all screens in a specific theatre")
-    public ResponseEntity<List<ScreenResponse>> getScreensByTheatre(@PathVariable Long theatreId) {
-        List<ScreenResponse> response = screenService.getScreensByTheatre(theatreId);
-        return ResponseEntity.ok(response);
-    }
-    
-    @GetMapping("/by-theatre-type")
-    @Operation(summary = "Get screens by theatre and type", description = "Retrieves screens by theatre and screen type")
-    public ResponseEntity<List<ScreenResponse>> getScreensByTheatreAndType(
-            @RequestParam Long theatreId,
-            @RequestParam Screen.ScreenType screenType) {
-        List<ScreenResponse> response = screenService.getScreensByTheatreAndType(theatreId, screenType);
         return ResponseEntity.ok(response);
     }
     

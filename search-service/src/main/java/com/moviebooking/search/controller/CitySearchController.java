@@ -18,23 +18,23 @@ public class CitySearchController {
     private final SearchService searchService;
     
     @GetMapping
-    @Operation(summary = "Search cities", description = "Search cities by name")
-    public ResponseEntity<List<CityDocument>> searchCities(@RequestParam(required = false) String query) {
+    @Operation(summary = "Search cities with filters", description = "Search cities with optional filters")
+    public ResponseEntity<List<CityDocument>> searchCities(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String country) {
+
+        if (state != null) {
+            List<CityDocument> results = searchService.searchCitiesByState(state);
+            return ResponseEntity.ok(results);
+        }
+
+        if (country != null) {
+            List<CityDocument> results = searchService.searchCitiesByCountry(country);
+            return ResponseEntity.ok(results);
+        }
+
         List<CityDocument> results = searchService.searchCities(query);
-        return ResponseEntity.ok(results);
-    }
-    
-    @GetMapping("/by-state")
-    @Operation(summary = "Search cities by state", description = "Find cities in a specific state")
-    public ResponseEntity<List<CityDocument>> searchCitiesByState(@RequestParam String state) {
-        List<CityDocument> results = searchService.searchCitiesByState(state);
-        return ResponseEntity.ok(results);
-    }
-    
-    @GetMapping("/by-country")
-    @Operation(summary = "Search cities by country", description = "Find cities in a specific country")
-    public ResponseEntity<List<CityDocument>> searchCitiesByCountry(@RequestParam String country) {
-        List<CityDocument> results = searchService.searchCitiesByCountry(country);
         return ResponseEntity.ok(results);
     }
     

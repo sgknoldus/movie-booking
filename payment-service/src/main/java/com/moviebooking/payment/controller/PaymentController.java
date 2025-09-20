@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/payment")
+@RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Payment", description = "Payment processing operations")
@@ -24,7 +24,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @PostMapping("/process")
+    @PostMapping
     @Operation(summary = "Process payment", description = "Process payment for a booking")
     public ResponseEntity<PaymentResponse> processPayment(@RequestBody PaymentRequest request) {
         log.info("Received payment request for booking: {}", request.getBookingId());
