@@ -1,16 +1,18 @@
 package com.moviebooking.notification.kafka;
 
-import com.moviebooking.common.events.booking.BookingConfirmedEvent;
-import com.moviebooking.notification.domain.NotificationRequest;
-import com.moviebooking.notification.service.NotificationService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.moviebooking.common.events.booking.BookingConfirmedEvent;
+import com.moviebooking.notification.domain.NotificationRequest;
+import com.moviebooking.notification.service.NotificationService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
@@ -82,12 +84,22 @@ public class NotificationEventListener {
     
     private NotificationRequest createNotificationRequestFromBookingEvent(BookingConfirmedEvent event) {
         Map<String, Object> templateData = new HashMap<>();
-        templateData.put("userId", event.getUserId());
+
+        // Map to template variable names expected by booking-confirmation.html
         templateData.put("bookingId", event.getBookingId());
+        templateData.put("userName", "User " + event.getUserId()); // TODO: Fetch actual user name
+        templateData.put("movieTitle", "Movie ID: " + event.getMovieId()); // TODO: Fetch actual movie title
+        templateData.put("theatreName", "Theatre ID: " + event.getTheatreId()); // TODO: Fetch actual theatre name
+        templateData.put("screenNumber", "Screen TBD"); // TODO: Fetch actual screen number
+        templateData.put("showDate", event.getShowDateTime().toLocalDate().toString());
+        templateData.put("showTime", event.getShowDateTime().toLocalTime().toString());
+        templateData.put("seats", String.join(", ", event.getSeatNumbers()));
+
+        // Keep original data for reference
+        templateData.put("userId", event.getUserId());
         templateData.put("showId", event.getShowId());
         templateData.put("theatreId", event.getTheatreId());
         templateData.put("movieId", event.getMovieId());
-        templateData.put("seatNumbers", event.getSeatNumbers());
         templateData.put("totalAmount", event.getTotalAmount());
         templateData.put("showDateTime", event.getShowDateTime());
         templateData.put("confirmedAt", event.getConfirmedAt());
