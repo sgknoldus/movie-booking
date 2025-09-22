@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 
-@Configuration
+// @Configuration - Disabled in favor of EnhancedGatewayConfig
 public class GatewayConfig {
 
     private final JwtTokenValidator jwtTokenValidator;

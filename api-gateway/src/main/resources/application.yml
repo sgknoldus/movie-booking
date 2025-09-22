@@ -69,6 +69,7 @@ logging:
     org.springframework.cloud.gateway: DEBUG
     reactor.netty: DEBUG
     org.springframework.security: DEBUG
+    io.github.resilience4j: DEBUG
 
 springdoc:
   api-docs:
@@ -91,3 +92,155 @@ springdoc:
         url: /payment-service/api-docs
       - name: Notification Service
         url: /notification-service/api-docs
+
+# Resilience4j Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      user-service:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+        ignoreExceptions:
+          - java.lang.IllegalArgumentException
+
+      booking-service:
+        registerHealthIndicator: true
+        slidingWindowSize: 15
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 40
+        waitDurationInOpenState: 60s
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        slowCallRateThreshold: 80
+        slowCallDurationThreshold: 3s
+
+      payment-service:
+        registerHealthIndicator: true
+        slidingWindowSize: 20
+        slidingWindowType: TIME_BASED
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 30
+        waitDurationInOpenState: 120s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        slowCallRateThreshold: 70
+        slowCallDurationThreshold: 5s
+
+      theatre-service:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 60
+        waitDurationInOpenState: 45s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+      search-service:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 3
+        failureRateThreshold: 70
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 2
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+  retry:
+    instances:
+      user-service:
+        maxAttempts: 3
+        waitDuration: 500ms
+        exponentialBackoffMultiplier: 2
+        maxWaitDuration: 5s
+        enableRandomizedWait: true
+        randomizedWaitFactor: 0.5
+        retryExceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - java.lang.IllegalArgumentException
+
+      booking-service:
+        maxAttempts: 4
+        waitDuration: 1s
+        exponentialBackoffMultiplier: 2
+        maxWaitDuration: 10s
+        enableRandomizedWait: true
+        randomizedWaitFactor: 0.3
+
+      payment-service:
+        maxAttempts: 2
+        waitDuration: 2s
+        exponentialBackoffMultiplier: 1.5
+        maxWaitDuration: 8s
+        enableRandomizedWait: false
+
+  timelimiter:
+    instances:
+      user-service:
+        timeoutDuration: 3s
+        cancelRunningFuture: true
+
+      booking-service:
+        timeoutDuration: 10s
+        cancelRunningFuture: true
+
+      payment-service:
+        timeoutDuration: 15s
+        cancelRunningFuture: true
+
+      theatre-service:
+        timeoutDuration: 5s
+        cancelRunningFuture: true
+
+      search-service:
+        timeoutDuration: 3s
+        cancelRunningFuture: true
+
+  ratelimiter:
+    instances:
+      user-auth:
+        limitForPeriod: 10
+        limitRefreshPeriod: 1s
+        timeoutDuration: 100ms
+        registerHealthIndicator: true
+        eventConsumerBufferSize: 100
+
+      booking-requests:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1s
+        timeoutDuration: 500ms
+        registerHealthIndicator: true
+
+      general-api:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 50ms
+        registerHealthIndicator: true
+
+  bulkhead:
+    instances:
+      user-service:
+        maxConcurrentCalls: 25
+        maxWaitDuration: 1s
+
+      booking-service:
+        maxConcurrentCalls: 50
+        maxWaitDuration: 2s
+
+      payment-service:
+        maxConcurrentCalls: 20
+        maxWaitDuration: 3s
